@@ -13,12 +13,12 @@ public class TaskQueue<S, T>
     /// <summary>
     /// A dictionary to keep track of which sources have tasks in the queue. Maps a source to the index of the task.
     /// </summary>
-    private Dictionary<S, int> mQueuedSources;
+    private readonly Dictionary<S, int> mQueuedSources;
 
     /// <summary>
     /// An circular array to serve as the queue.
     /// </summary>
-    private Entry<S, T>[] mTaskQueue;
+    private TaskEntry<S, T>[] mTaskQueue;
 
     /// <summary>
     /// The index of the array to enqueue.
@@ -41,11 +41,12 @@ public class TaskQueue<S, T>
     /// <param name="capacity">The starting capacity of the TaskQueue</param>
     public TaskQueue(int capacity)
     {
-        mTaskQueue = new Entry<S, T>[capacity];
-
-        mCapacity = capacity;
+        mCapacity = capacity + 1;
         mEnqueueIndex = 0;
         mDequeueIndex = 0;
+
+        mQueuedSources = new();
+        mTaskQueue = new TaskEntry<S, T>[mCapacity];
     }
 
     /// <summary>
@@ -58,7 +59,23 @@ public class TaskQueue<S, T>
     /// </summary>
     public int Count
     {
-        get { return Mathf.Abs(mEnqueueIndex - mDequeueIndex); }
+        get 
+        {
+            if (mDequeueIndex > mEnqueueIndex)
+            { 
+                return mCapacity - (mDequeueIndex - mEnqueueIndex);
+            }
+
+            return mEnqueueIndex - mDequeueIndex;
+        }
+    }
+
+    /// <summary>
+    /// The maximum capacity of the task queue.
+    /// </summary>
+    public int Capacity
+    {
+        get { return mCapacity - 1; }
     }
 
     /// <summary>
@@ -86,10 +103,10 @@ public class TaskQueue<S, T>
     /// <param name="task">The task to queue</param>
     public void Enqueue(S source, T task)
     {
-        // If queue is full, grow the capacity
-        if (IsFull())
+        // Ensure the source is not null
+        if (source == null)
         {
-            ResizeTaskQueue();
+            throw new ArgumentNullException(paramName: nameof(source), "Source cannot be null");
         }
 
         // Check if source has a task in the queue
@@ -102,8 +119,14 @@ public class TaskQueue<S, T>
             mEnqueueIndex = (mEnqueueIndex - 1) % mCapacity;
         }
 
+        // If queue is full, grow the capacity
+        if (IsFull())
+        {
+            ResizeTaskQueue();
+        }
+
         // Add new task
-        mTaskQueue[mEnqueueIndex] = new Entry<S, T>(source, task);
+        mTaskQueue[mEnqueueIndex] = new TaskEntry<S, T>(source, task);
         mQueuedSources[source] = mEnqueueIndex;
 
         // Move the enqueue index
@@ -111,13 +134,18 @@ public class TaskQueue<S, T>
     }
 
     /// <summary>
-    /// Dequeue the oldest task.
+    /// Dequeue a task.
     /// </summary>
-    /// <returns>The oldest task</returns>
+    /// <returns>A task</returns>
     public T Dequeue()
     {
+        if (IsEmpty())
+        {
+            throw new InvalidOperationException("Cannot dequeue from an empty task queue!");
+        }
+
         // Get the item at the dequeue index
-        Entry<S, T> toReturn = mTaskQueue[mDequeueIndex];
+        TaskEntry<S, T> toReturn = mTaskQueue[mDequeueIndex];
 
         // Remove the task from the task queue
         mTaskQueue[mDequeueIndex] = null;
@@ -139,7 +167,7 @@ public class TaskQueue<S, T>
         // Double the capacity
         mCapacity *= 2;
 
-        Entry<S, T>[] newQueue = new Entry<S, T>[mCapacity];
+        TaskEntry<S, T>[] newQueue = new TaskEntry<S, T>[mCapacity];
         Array.Copy(mTaskQueue, newQueue, Mathf.Min(mTaskQueue.Length, mCapacity));
 
         mTaskQueue = newQueue;
@@ -148,16 +176,16 @@ public class TaskQueue<S, T>
     /// <summary>
     /// Internal class to represent elements stored in a task queue
     /// </summary>
-    /// <typeparam name="O">The origin type</typeparam>
+    /// <typeparam name="I">The identifying type</typeparam>
     /// <typeparam name="D">The type of the data</typeparam>
-    private class Entry<O, D>
+    private class TaskEntry<I, D>
     {
-        public O Origin;
+        public I Origin;
         public D Data;
 
-        public Entry(O origin, D data)
+        public TaskEntry(I id, D data)
         {
-            Origin = origin;
+            Origin = id;
             Data = data;
         }
     }
