@@ -14,7 +14,7 @@ public class TaskQueueTest
     public void TestDefaultConstructor()
     {
         // Arrange
-        TaskQueue<string, string> taskQueue = new();
+        SourceEvictingTaskQueue<string, string> taskQueue = new();
 
         // Act
 
@@ -32,7 +32,7 @@ public class TaskQueueTest
     public void TestConstructor()
     {
         // Arrange
-        TaskQueue<string, string> taskQueue = new(10);
+        SourceEvictingTaskQueue<string, string> taskQueue = new(10);
 
         // Act
 
@@ -50,7 +50,7 @@ public class TaskQueueTest
     public void TestEnqueue()
     {
         // Arrange
-        TaskQueue<string, int> taskQueue = new();
+        SourceEvictingTaskQueue<string, int> taskQueue = new();
 
         // Act
         taskQueue.Enqueue("source1", 1);
@@ -69,7 +69,7 @@ public class TaskQueueTest
     public void TestDequeue()
     {
         // Arrange
-        TaskQueue<string, int> taskQueue = new();
+        SourceEvictingTaskQueue<string, int> taskQueue = new();
         int expectedResult = 1;
         taskQueue.Enqueue("source1", expectedResult);
 
@@ -91,7 +91,7 @@ public class TaskQueueTest
     public void TestFull()
     {
         // Arrange
-        TaskQueue<string, int> taskQueue = new(1);
+        SourceEvictingTaskQueue<string, int> taskQueue = new(1);
 
         // Act
         taskQueue.Enqueue("string1", 1);
@@ -110,7 +110,7 @@ public class TaskQueueTest
     public void TestResize()
     {
         // Arrange
-        TaskQueue<string, int> taskQueue = new(1);
+        SourceEvictingTaskQueue<string, int> taskQueue = new(1);
 
         // Act
         taskQueue.Enqueue("string1", 1);
@@ -130,7 +130,7 @@ public class TaskQueueTest
     public void TestEmptyDequeue()
     {
         // Arrange
-        TaskQueue<string, int> taskQueue = new(1);
+        SourceEvictingTaskQueue<string, int> taskQueue = new(1);
         InvalidOperationException caughtException = null;
 
         // Act
@@ -158,7 +158,7 @@ public class TaskQueueTest
     public void TestSameSourceEnqueue()
     {
         // Arrange
-        TaskQueue<string, int> taskQueue = new(1);
+        SourceEvictingTaskQueue<string, int> taskQueue = new(1);
         int lastTask = 5;
         string source = "source1";
         int actualResult = 0;
@@ -184,7 +184,7 @@ public class TaskQueueTest
     public void TestNullSourceEnqueue()
     {
         // Arrange
-        TaskQueue<string, int> taskQueue = new(1);
+        SourceEvictingTaskQueue<string, int> taskQueue = new(1);
         ArgumentNullException caughtException = null;
 
         // Act
