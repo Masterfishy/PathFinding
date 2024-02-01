@@ -5,9 +5,10 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
+
 public class PathFinder : MonoBehaviour
 {
-    public ISearchAlgorithm SearchAlgorithm;
+    public MonoBehaviour SearchAlgorithm;
     public ISearchableMap Map;
 
     private SourceEvictingTaskQueue<int, PathRequest> mTaskQueue;
@@ -49,6 +50,14 @@ public class PathFinder : MonoBehaviour
         mIsProcessingTask = false;
     }
 
+    private void OnValidate()
+    {
+        if (SearchAlgorithm != null && SearchAlgorithm is not ISearchAlgorithm)
+        {
+            Debug.LogError($"{SearchAlgorithm.name} does not implement ISearchAlgorithm!");
+        }
+    }
+
     private void OnEnable()
     {
         mIsProcessingTask = false;
@@ -64,7 +73,7 @@ public class PathFinder : MonoBehaviour
             mCurrentRequest = mTaskQueue.Dequeue();
 
             // Process the request
-            SearchAlgorithm.FindPath(mCurrentRequest.PathStart, mCurrentRequest.PathEnd, Map, OnFinishedProcessingRequest);
+            (SearchAlgorithm as ISearchAlgorithm).FindPath(mCurrentRequest.PathStart, mCurrentRequest.PathEnd, Map, OnFinishedProcessingRequest);
 
             mIsProcessingTask = true;
         }
