@@ -1,12 +1,14 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 public class PathFinder : MonoBehaviour
 {
     public ISearchAlgorithm SearchAlgorithm;
+    public ISearchableMap Map;
 
     private SourceEvictingTaskQueue<int, PathRequest> mTaskQueue;
     private bool mIsProcessingTask;
@@ -62,7 +64,7 @@ public class PathFinder : MonoBehaviour
             mCurrentRequest = mTaskQueue.Dequeue();
 
             // Process the request
-            SearchAlgorithm.FindPath(mCurrentRequest.PathStart, mCurrentRequest.PathEnd, OnFinishedProcessingRequest);
+            SearchAlgorithm.FindPath(mCurrentRequest.PathStart, mCurrentRequest.PathEnd, Map, OnFinishedProcessingRequest);
 
             mIsProcessingTask = true;
         }
