@@ -1,15 +1,21 @@
 using System;
 using UnityEngine;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
-
+/// <summary>
+/// This class represents a service that provides processing for finding paths
+/// from one searchable position to another using a provided search algorithm
+/// </summary>
 public class PathFinder : MonoBehaviour
 {
-    public MonoBehaviour SearchAlgorithm;
-    public ISearchableMap Map;
+    /// <summary>
+    /// The search algorithm to use for path finding
+    /// </summary>
+    public SearchAlgorithmUnityContainer SearchAlgorithm;
+
+    /// <summary>
+    /// The searchable map to explore
+    /// </summary>
+    public SearchableMapUnityContainer SearchableMap;
 
     private SourceEvictingTaskQueue<int, PathRequest> mTaskQueue;
     private bool mIsProcessingTask;
@@ -50,14 +56,6 @@ public class PathFinder : MonoBehaviour
         mIsProcessingTask = false;
     }
 
-    private void OnValidate()
-    {
-        if (SearchAlgorithm != null && SearchAlgorithm is not ISearchAlgorithm)
-        {
-            Debug.LogError($"{SearchAlgorithm.name} does not implement ISearchAlgorithm!");
-        }
-    }
-
     private void OnEnable()
     {
         mIsProcessingTask = false;
@@ -73,7 +71,7 @@ public class PathFinder : MonoBehaviour
             mCurrentRequest = mTaskQueue.Dequeue();
 
             // Process the request
-            (SearchAlgorithm as ISearchAlgorithm).FindPath(mCurrentRequest.PathStart, mCurrentRequest.PathEnd, Map, OnFinishedProcessingRequest);
+            SearchAlgorithm.Contents.FindPath(mCurrentRequest.PathStart, mCurrentRequest.PathEnd, SearchableMap.Contents, OnFinishedProcessingRequest);
 
             mIsProcessingTask = true;
         }

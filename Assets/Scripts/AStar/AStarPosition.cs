@@ -6,20 +6,27 @@ using UnityEngine;
 
 public class AStarPosition : ISearchablePosition, IHeapItem<AStarPosition>
 {
-    public int GCost;
-    public int HCost;
     public AStarPosition Parent;
-    private Vector3Int mPosition;
 
-    private int mHeapIndex;
-    
-    public int HeapIndex { get => mHeapIndex; set => mHeapIndex = value; }
+    /// <summary>
+    /// The cost of the path from start to this node
+    /// </summary>
+    public int GCost;
+
+    /// <summary>
+    /// Heuristic cost
+    /// </summary>
+    public int HCost;
 
     /// <summary>
     /// The total cost of moving to this position
     /// </summary>
     public int Cost => GCost + HCost;
 
+    private int mHeapIndex;
+    public int HeapIndex { get => mHeapIndex; set => mHeapIndex = value; }
+
+    private Vector3Int mPosition;
     public Vector3 Position => mPosition;
 
     /// <summary>

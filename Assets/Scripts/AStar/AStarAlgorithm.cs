@@ -71,6 +71,7 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
                 int neighborCost = currentNode.GCost + mMap.GetTravelCost(currentNode, neighbor);
                 if (neighborCost < neighbor.GCost || !openSet.Contains(neighbor))
                 {
+                    // Update the neighbor's cost
                     neighbor.GCost = neighborCost;
                     neighbor.HCost = mMap.GetTravelCost(neighbor, mEndPosition);
                     neighbor.Parent = currentNode;
@@ -131,6 +132,7 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
             return;
         }
 
+        // Draw the path
         for (int i = 1; i < mDebugPath.Count; i++)
         {
             Gizmos.color = DebugPathColor;

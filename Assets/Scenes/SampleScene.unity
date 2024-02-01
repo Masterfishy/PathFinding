@@ -244,7 +244,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c34ce1e805fc3ff4683a55541e8c5671, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SearchAlgorithm: {fileID: 1130881752}
+  SearchableMap:
+    searchableMapObject: {fileID: 11400000, guid: 0590ae145db516d44b1f321ee3ad8b35, type: 2}
+  SearchAlgorithm:
+    searchAlgorithmObject: {fileID: 1130881754}
 --- !u!4 &759661622
 Transform:
   m_ObjectHideFlags: 0
@@ -269,7 +272,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1130881753}
-  - component: {fileID: 1130881752}
+  - component: {fileID: 1130881754}
   m_Layer: 0
   m_Name: A* Search Algorithm
   m_TagString: Untagged
@@ -277,19 +280,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1130881752
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1130881751}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cf93406f8d94d694082b11fd654318fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  DebugPathColor: {r: 0.82641506, g: 0.15436803, b: 0.76387626, a: 0}
 --- !u!4 &1130881753
 Transform:
   m_ObjectHideFlags: 0
@@ -305,6 +295,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1130881754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1130881751}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf93406f8d94d694082b11fd654318fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  DebugPathColor: {r: 0.7735849, g: 0.16785322, b: 0.72328424, a: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

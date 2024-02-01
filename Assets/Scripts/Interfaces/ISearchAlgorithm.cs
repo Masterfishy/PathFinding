@@ -2,7 +2,6 @@ using System;
 using System.Reflection;
 using UnityEngine;
 
-
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -24,16 +23,16 @@ public interface ISearchAlgorithm
 }
 
 /// <summary>
-/// This container class wraps the interface to allow objects that implement 
-/// the interface to appear in the unity editor as serializable
+/// This container class wraps the ISearchAlgorithm interface to allow objects
+/// that implement the interface to be drag and dropped into the property field
 /// </summary>
 [Serializable]
 public class SearchAlgorithmUnityContainer
 {
-    [UnityEngine.SerializeField]
+    [SerializeField]
     private UnityEngine.Object searchAlgorithmObject;
 
-    public ISearchAlgorithm SearchAlgorithm
+    public ISearchAlgorithm Contents
     {
         get { return searchAlgorithmObject as ISearchAlgorithm; }
         set { searchAlgorithmObject = value as UnityEngine.Object; }
@@ -58,7 +57,20 @@ public class SearchAlgorithmUnityContainerPropertyDrawer : PropertyDrawer
         }
 
         EditorGUI.BeginChangeCheck();
-        algoProxy.SearchAlgorithm = EditorGUI.ObjectField(position, label, algoProxy.SearchAlgorithm as UnityEngine.Object, typeof(ISearchAlgorithm), true) as ISearchAlgorithm;
+        UnityEngine.Object rawObject = EditorGUI.ObjectField(position, label, algoProxy.Contents as UnityEngine.Object, typeof(UnityEngine.Object), true);
+
+        // Handle rawObject is ISearchAlgorithm
+        if (rawObject is ISearchAlgorithm searchAlgorithm)
+        {
+            algoProxy.Contents = searchAlgorithm;
+        }
+
+        // Handle rawObject is GameObject
+        if (rawObject is GameObject go)
+        {
+            algoProxy.Contents = go.GetComponent<ISearchAlgorithm>();
+        }
+       
         if (EditorGUI.EndChangeCheck())
         {
             _ = EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());

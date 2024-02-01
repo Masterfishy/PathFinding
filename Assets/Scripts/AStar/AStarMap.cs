@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[CreateAssetMenu(menuName ="A* Map")]
 public class AStarMap : ScriptableObject, ISearchableMap
 {
     public ISearchablePosition[] MapPositions => throw new System.NotImplementedException();
