@@ -1,3 +1,4 @@
+using Codice.Client.BaseCommands;
 using System;
 using UnityEngine;
 
@@ -17,6 +18,8 @@ public class PathFinder : MonoBehaviour
     /// </summary>
     public SearchableMapUnityContainer SearchableMap;
 
+    public PathRequestEvent PathRequestEvent;
+
     private SourceEvictingTaskQueue<int, PathRequest> mTaskQueue;
     private bool mIsProcessingTask;
     private PathRequest mCurrentRequest;
@@ -24,17 +27,11 @@ public class PathFinder : MonoBehaviour
     /// <summary>
     /// Request a path from the start position to the end position
     /// </summary>
-    /// <param name="source">The unique identifier of the entity that made the request</param>
-    /// <param name="start">The start position</param>
-    /// <param name="end">The end position</param>
-    /// <param name="callback">The callback to trigger on request completion</param>
-    public void RequestPath(int source, ISearchablePosition start, ISearchablePosition end, Action<ISearchablePosition[], bool> callback)
+    /// <param name="request">The path request</param>
+    public void RequestPath(PathRequest request)
     {
-        // Create the PathRequest
-        PathRequest newRequest = new(source, start, end, callback);
-
         // Add it to the queue
-        mTaskQueue.Enqueue(source, newRequest);
+        mTaskQueue.Enqueue(request.Source, request);
     }
 
     /// <summary>
@@ -43,6 +40,7 @@ public class PathFinder : MonoBehaviour
     /// <param name="path"></param>
     public void OnFinishedProcessingRequest(ISearchablePosition[] path)
     {
+        Debug.Log($"Path Finder callback! {mIsProcessingTask}, {mCurrentRequest}");
         if (!mIsProcessingTask || mCurrentRequest == null)
         {
             return;
@@ -61,6 +59,13 @@ public class PathFinder : MonoBehaviour
         mIsProcessingTask = false;
         mCurrentRequest = null;
         mTaskQueue = new();
+
+        PathRequestEvent.OnEventRaised += RequestPath;
+    }
+
+    private void OnDisable()
+    {
+        PathRequestEvent.OnEventRaised -= RequestPath;
     }
 
     private void Update()
@@ -77,33 +82,38 @@ public class PathFinder : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// This internal class represents a request for a path from the start position to the end position.
-    /// </summary>
-    private class PathRequest
+    private void OnDrawGizmos()
     {
-        public int Source;
-        public ISearchablePosition PathStart;
-        public ISearchablePosition PathEnd;
+        Gizmos.DrawWireCube(Vector3.zero, new Vector3(SearchableMap.Contents.Size, SearchableMap.Contents.Size));
+    }
+}
 
-        /// <summary>
-        /// A delegate callback that returns a discovered path and a bool to indicate the success of the request.
-        /// </summary>
-        public Action<ISearchablePosition[], bool> OnPathComplete;
+/// <summary>
+/// This internal class represents a request for a path from the start position to the end position.
+/// </summary>
+public class PathRequest
+{
+    public int Source;
+    public ISearchablePosition PathStart;
+    public ISearchablePosition PathEnd;
 
-        /// <summary>
-        /// Create a path request.
-        /// </summary>
-        /// <param name="source">The unique identifier for the entity that made the request</param>
-        /// <param name="pathStart">The starting position of the path</param>
-        /// <param name="pathEnd">The ending position of the path</param>
-        /// <param name="onPathComplete">The callback to trigger to return the discovered path</param>
-        public PathRequest(int source, ISearchablePosition pathStart, ISearchablePosition pathEnd, Action<ISearchablePosition[], bool> onPathComplete)
-        {
-            Source = source;
-            PathStart = pathStart;
-            PathEnd = pathEnd;
-            OnPathComplete = onPathComplete;
-        }
+    /// <summary>
+    /// A delegate callback that returns a discovered path and a bool to indicate the success of the request.
+    /// </summary>
+    public Action<ISearchablePosition[], bool> OnPathComplete;
+
+    /// <summary>
+    /// Create a path request.
+    /// </summary>
+    /// <param name="source">The unique identifier for the entity that made the request</param>
+    /// <param name="pathStart">The starting position of the path</param>
+    /// <param name="pathEnd">The ending position of the path</param>
+    /// <param name="onPathComplete">The callback to trigger to return the discovered path</param>
+    public PathRequest(int source, ISearchablePosition pathStart, ISearchablePosition pathEnd, Action<ISearchablePosition[], bool> onPathComplete)
+    {
+        Source = source;
+        PathStart = pathStart;
+        PathEnd = pathEnd;
+        OnPathComplete = onPathComplete;
     }
 }

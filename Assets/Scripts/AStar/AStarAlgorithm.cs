@@ -37,8 +37,10 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
         AStarPosition[] path = new AStarPosition[0];
         bool pathSuccess = false;
 
+        Dictionary<Vector3, AStarPosition> discoveredNodes = new();
+
         // The openSet stores all discovered nodes with the cheapest one at the top
-        MinHeap<AStarPosition> openSet = new(mMap.MapPositions.Length);
+        MinHeap<AStarPosition> openSet = new(mMap.Size);
 
         // The closedSet stores all the nodes we have visited
         HashSet<AStarPosition> closedSet = new();
@@ -59,30 +61,37 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
             }
 
             // Search for the next best neighbor
-            AStarPosition[] neighbors = mMap.GetNeighbors(currentNode) as AStarPosition[];
-            foreach(AStarPosition neighbor in neighbors)
+            List<ISearchablePosition> neighbors = mMap.GetNeighbors(currentNode);
+            foreach(ISearchablePosition neighbor in neighbors)
             {
-                if (closedSet.Contains(neighbor))
+                // Find the corresponding AStarPosition
+                if (!discoveredNodes.TryGetValue(neighbor.Position, out AStarPosition aNeighbor))
+                {
+                    aNeighbor = new AStarPosition(Vector3Int.FloorToInt(neighbor.Position));
+                    discoveredNodes.Add(neighbor.Position, aNeighbor);
+                }
+
+                if (closedSet.Contains(aNeighbor))
                 {
                     // If we have visited this node, continue
                     continue;
                 }
 
                 int neighborCost = currentNode.GCost + mMap.GetTravelCost(currentNode, neighbor);
-                if (neighborCost < neighbor.GCost || !openSet.Contains(neighbor))
+                if (neighborCost < aNeighbor.GCost || !openSet.Contains(aNeighbor))
                 {
                     // Update the neighbor's cost
-                    neighbor.GCost = neighborCost;
-                    neighbor.HCost = mMap.GetTravelCost(neighbor, mEndPosition);
-                    neighbor.Parent = currentNode;
+                    aNeighbor.GCost = neighborCost;
+                    aNeighbor.HCost = mMap.GetTravelCost(neighbor, mEndPosition);
+                    aNeighbor.Parent = currentNode;
 
-                    if (!openSet.Contains(neighbor))
+                    if (!openSet.Contains(aNeighbor))
                     {
-                        openSet.Push(neighbor);
+                        openSet.Push(aNeighbor);
                     }
                     else
                     {
-                        openSet.UpdateItem(neighbor);
+                        openSet.UpdateItem(aNeighbor);
                     }
                 }
             }
@@ -95,6 +104,7 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
             path = RetracePath(mStartPosition, mEndPosition);
         }
 
+        Debug.Log($"AStar found a way {pathSuccess}");
         mCallback(path);
     }
 

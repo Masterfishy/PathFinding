@@ -1,6 +1,9 @@
 using System;
+using System.Collections;
 using System.Reflection;
 using UnityEngine;
+using System.Collections.Generic;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -17,12 +20,17 @@ public interface ISearchableMap
     /// </summary>
     /// <param name="position">The position to find neighbors of</param>
     /// <returns>An array of <c>ISearchablePosition</c>s that are neighbors of the given position</returns>
-    public ISearchablePosition[] GetNeighbors(ISearchablePosition position);
+    public List<ISearchablePosition> GetNeighbors(ISearchablePosition position);
 
     /// <summary>
     /// Get the collection of <c>ISearchablePosition</c>s in the map
     /// </summary>
     public ISearchablePosition[] MapPositions { get; }
+
+    /// <summary>
+    /// Get the size of the map
+    /// </summary>
+    public int Size { get; }
 }
 
 /// <summary>
