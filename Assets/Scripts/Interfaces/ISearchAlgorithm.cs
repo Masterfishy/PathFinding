@@ -1,6 +1,8 @@
 using System;
 using System.Reflection;
 using UnityEngine;
+using System.Collections.Generic;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -19,7 +21,7 @@ public interface ISearchAlgorithm
     /// <param name="end">The end position</param>
     /// <param name="map">The search able map the positions are found on</param>
     /// <param name="callback">The callback to report the found path</param>
-    public void FindPath(ISearchablePosition start, ISearchablePosition end, ISearchableMap map, Action<ISearchablePosition[]> callback);
+    public void FindPath(ISearchablePosition start, ISearchablePosition end, ISearchableMap map, Action<List<ISearchablePosition>> callback);
 }
 
 /// <summary>

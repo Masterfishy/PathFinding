@@ -2,6 +2,7 @@ using Codice.Client.BaseCommands;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 /// <summary>
@@ -12,18 +13,20 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
     private AStarPosition mStartPosition;
     private AStarPosition mEndPosition;
     private AStarMap mMap;
-    private Action<AStarPosition[]> mCallback;
+    private Action<List<ISearchablePosition>> mCallback;
 
     [Header("Debug")]
     public Color DebugPathColor;
-    private List<AStarPosition> mDebugPath;
+    private List<ISearchablePosition> mDebugPath;
 
-    public void FindPath(ISearchablePosition start, ISearchablePosition end, ISearchableMap map, Action<ISearchablePosition[]> callback)
+    public void FindPath(ISearchablePosition start, ISearchablePosition end, ISearchableMap map, Action<List<ISearchablePosition>> callback)
     {
         mStartPosition = start as AStarPosition;
         mEndPosition = end as AStarPosition;
         mMap = map as AStarMap;
         mCallback = callback;
+
+        Debug.Log($"Starting search...: Start={mStartPosition.Position}, End={mEndPosition.Position}, Map={mMap}:{mMap.Size}, Callback={mCallback}");
 
         StopAllCoroutines();
         StartCoroutine(FindPathCoroutine());
@@ -34,13 +37,11 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
     /// </summary>
     private IEnumerator FindPathCoroutine()
     {
-        AStarPosition[] path = new AStarPosition[0];
+        List<ISearchablePosition> path = new();
         bool pathSuccess = false;
 
-        Dictionary<Vector3, AStarPosition> discoveredNodes = new();
-
         // The openSet stores all discovered nodes with the cheapest one at the top
-        MinHeap<AStarPosition> openSet = new(mMap.Size);
+        MinHeap<AStarPosition> openSet = new(mMap.Size * 10);
 
         // The closedSet stores all the nodes we have visited
         HashSet<AStarPosition> closedSet = new();
@@ -62,36 +63,30 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
 
             // Search for the next best neighbor
             List<ISearchablePosition> neighbors = mMap.GetNeighbors(currentNode);
-            foreach(ISearchablePosition neighbor in neighbors)
+            foreach(AStarPosition neighbor in neighbors.Cast<AStarPosition>())
             {
-                // Find the corresponding AStarPosition
-                if (!discoveredNodes.TryGetValue(neighbor.Position, out AStarPosition aNeighbor))
-                {
-                    aNeighbor = new AStarPosition(Vector3Int.FloorToInt(neighbor.Position));
-                    discoveredNodes.Add(neighbor.Position, aNeighbor);
-                }
-
-                if (closedSet.Contains(aNeighbor))
+                Debug.Log($"Neighbor: {neighbor}, Cost: {neighbor.Cost}");
+                if (closedSet.Contains(neighbor))
                 {
                     // If we have visited this node, continue
                     continue;
                 }
 
                 int neighborCost = currentNode.GCost + mMap.GetTravelCost(currentNode, neighbor);
-                if (neighborCost < aNeighbor.GCost || !openSet.Contains(aNeighbor))
+                if (neighborCost < neighbor.GCost || !openSet.Contains(neighbor))
                 {
                     // Update the neighbor's cost
-                    aNeighbor.GCost = neighborCost;
-                    aNeighbor.HCost = mMap.GetTravelCost(neighbor, mEndPosition);
-                    aNeighbor.Parent = currentNode;
+                    neighbor.GCost = neighborCost;
+                    neighbor.HCost = mMap.GetTravelCost(neighbor, mEndPosition);
+                    neighbor.Parent = currentNode;
 
-                    if (!openSet.Contains(aNeighbor))
+                    if (!openSet.Contains(neighbor))
                     {
-                        openSet.Push(aNeighbor);
+                        openSet.Push(neighbor);
                     }
                     else
                     {
-                        openSet.UpdateItem(aNeighbor);
+                        openSet.UpdateItem(neighbor);
                     }
                 }
             }
@@ -114,9 +109,9 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
     /// <param name="start">The start position</param>
     /// <param name="end">The end position<param>
     /// <returns>An array of positions from start to end</returns>
-    private AStarPosition[] RetracePath(AStarPosition start, AStarPosition end)
+    private List<ISearchablePosition> RetracePath(AStarPosition start, AStarPosition end)
     {
-        List<AStarPosition> path = new();
+        List<ISearchablePosition> path = new();
         AStarPosition currentPos = end;
 
         // Retrace the path
@@ -132,7 +127,7 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
 
         mDebugPath = path;
 
-        return path.ToArray();
+        return path;
     }
 
     private void OnDrawGizmos()

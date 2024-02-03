@@ -19,13 +19,13 @@ public interface ISearchableMap
     /// Get the neighbors around a given position
     /// </summary>
     /// <param name="position">The position to find neighbors of</param>
-    /// <returns>An array of <c>ISearchablePosition</c>s that are neighbors of the given position</returns>
+    /// <returns>A list of <c>ISearchablePosition</c>s that are neighbors of the given position</returns>
     public List<ISearchablePosition> GetNeighbors(ISearchablePosition position);
 
     /// <summary>
     /// Get the collection of <c>ISearchablePosition</c>s in the map
     /// </summary>
-    public ISearchablePosition[] MapPositions { get; }
+    public List<ISearchablePosition> MapPositions { get; }
 
     /// <summary>
     /// Get the size of the map

@@ -1,5 +1,6 @@
 using Codice.Client.BaseCommands;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -30,6 +31,7 @@ public class PathFinder : MonoBehaviour
     /// <param name="request">The path request</param>
     public void RequestPath(PathRequest request)
     {
+        Debug.Log($"Requesting Path: {request}");
         // Add it to the queue
         mTaskQueue.Enqueue(request.Source, request);
     }
@@ -38,7 +40,7 @@ public class PathFinder : MonoBehaviour
     /// Callback function triggered when a path request task is processed
     /// </summary>
     /// <param name="path"></param>
-    public void OnFinishedProcessingRequest(ISearchablePosition[] path)
+    public void OnFinishedProcessingRequest(List<ISearchablePosition> path)
     {
         Debug.Log($"Path Finder callback! {mIsProcessingTask}, {mCurrentRequest}");
         if (!mIsProcessingTask || mCurrentRequest == null)
@@ -46,7 +48,7 @@ public class PathFinder : MonoBehaviour
             return;
         }
 
-        bool success = path.Length != 0;
+        bool success = path.Count != 0;
 
         // Trigger the callback of the path request
         mCurrentRequest.OnPathComplete(path, success);
@@ -74,6 +76,7 @@ public class PathFinder : MonoBehaviour
         {
             // Dequeue
             mCurrentRequest = mTaskQueue.Dequeue();
+            Debug.Log($"Processing the request: {mCurrentRequest}");
 
             // Process the request
             SearchAlgorithm.Contents.FindPath(mCurrentRequest.PathStart, mCurrentRequest.PathEnd, SearchableMap.Contents, OnFinishedProcessingRequest);
@@ -100,7 +103,7 @@ public class PathRequest
     /// <summary>
     /// A delegate callback that returns a discovered path and a bool to indicate the success of the request.
     /// </summary>
-    public Action<ISearchablePosition[], bool> OnPathComplete;
+    public Action<List<ISearchablePosition>, bool> OnPathComplete;
 
     /// <summary>
     /// Create a path request.
@@ -109,11 +112,16 @@ public class PathRequest
     /// <param name="pathStart">The starting position of the path</param>
     /// <param name="pathEnd">The ending position of the path</param>
     /// <param name="onPathComplete">The callback to trigger to return the discovered path</param>
-    public PathRequest(int source, ISearchablePosition pathStart, ISearchablePosition pathEnd, Action<ISearchablePosition[], bool> onPathComplete)
+    public PathRequest(int source, ISearchablePosition pathStart, ISearchablePosition pathEnd, Action<List<ISearchablePosition>, bool> onPathComplete)
     {
         Source = source;
         PathStart = pathStart;
         PathEnd = pathEnd;
         OnPathComplete = onPathComplete;
+    }
+
+    public override string ToString()
+    {
+        return $"Request: Source={Source}, Start={PathStart.Position}, End={PathEnd.Position}, Callback={OnPathComplete}";
     }
 }

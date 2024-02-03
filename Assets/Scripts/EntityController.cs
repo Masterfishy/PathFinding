@@ -14,9 +14,9 @@ public class EntityController : MonoBehaviour
 
     [Header("Debug")]
     public Color DebugPathColor;
-    private ISearchablePosition[] mDebugPath;
+    private List<ISearchablePosition> mDebugPath;
 
-    public void OnPathFound(ISearchablePosition[] path, bool pathSuccess)
+    public void OnPathFound(List<ISearchablePosition> path, bool pathSuccess)
     {
         Debug.Log($"Path Received! {pathSuccess}");
         if (pathSuccess)
@@ -33,7 +33,7 @@ public class EntityController : MonoBehaviour
         }
 
         // Draw the path
-        for (int i = 1; i < mDebugPath.Length; i++)
+        for (int i = 1; i < mDebugPath.Count; i++)
         {
             Gizmos.color = DebugPathColor;
             Gizmos.DrawSphere(mDebugPath[i].Position, 0.05f);
