@@ -63,4 +63,14 @@ public class AStarPosition : ISearchablePosition, IHeapItem<AStarPosition>
 
         return compareResult;
     }
+
+    /// <summary>
+    /// Check if the positon in the AStarPosition is the same as another
+    /// </summary>
+    /// <param name="other">The other AStartPosition</param>
+    /// <returns>True if the stored positions are the same</returns>
+    public bool Equals(AStarPosition other)
+    {
+        return other != null && Position.Equals(other.Position);
+    }
 }

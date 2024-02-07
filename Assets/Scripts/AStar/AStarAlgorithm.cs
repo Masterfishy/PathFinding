@@ -1,9 +1,11 @@
 using Codice.Client.BaseCommands;
+using Codice.Client.Common.GameUI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 /// <summary>
 /// A class that represents a search algorithm implemented with A*
@@ -17,6 +19,8 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
 
     [Header("Debug")]
     public Color DebugPathColor;
+    public Tilemap DebugTilemap;
+    public TileBase DebugTileBase;
     private List<ISearchablePosition> mDebugPath;
 
     public void FindPath(ISearchablePosition start, ISearchablePosition end, ISearchableMap map, Action<List<ISearchablePosition>> callback)
@@ -25,6 +29,8 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
         mEndPosition = end as AStarPosition;
         mMap = map as AStarMap;
         mCallback = callback;
+
+        DebugTilemap.ClearAllTiles();
 
         Debug.Log($"Starting search...: Start={mStartPosition.Position}, End={mEndPosition.Position}, Map={mMap}:{mMap.Size}, Callback={mCallback}");
 
@@ -40,13 +46,17 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
         List<ISearchablePosition> path = new();
         bool pathSuccess = false;
 
+        // Get the map's position for start and end
+        AStarPosition startPos = mMap.GetPosition(Vector3Int.FloorToInt(mStartPosition.Position)) as AStarPosition;
+        AStarPosition endPos = mMap.GetPosition(Vector3Int.FloorToInt(mEndPosition.Position)) as AStarPosition;
+
         // The openSet stores all discovered nodes with the cheapest one at the top
         MinHeap<AStarPosition> openSet = new(mMap.Size * 10);
 
         // The closedSet stores all the nodes we have visited
         HashSet<AStarPosition> closedSet = new();
 
-        openSet.Push(mStartPosition);
+        openSet.Push(startPos);
 
         while (openSet.Count > 0)
         {
@@ -54,8 +64,10 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
             AStarPosition currentNode = openSet.Pop();
             closedSet.Add(currentNode);
 
+            DebugPosition(Vector3Int.FloorToInt(currentNode.Position));
+
             // If we reach our target
-            if (currentNode.Equals(mEndPosition))
+            if (currentNode.Equals(endPos))
             {
                 pathSuccess = true;
                 break;
@@ -65,7 +77,7 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
             List<ISearchablePosition> neighbors = mMap.GetNeighbors(currentNode);
             foreach(AStarPosition neighbor in neighbors.Cast<AStarPosition>())
             {
-                Debug.Log($"Neighbor: {neighbor}, Cost: {neighbor.Cost}");
+                Debug.Log($"Neighbor: {neighbor.Position}, Cost: {neighbor.Cost}");
                 if (closedSet.Contains(neighbor))
                 {
                     // If we have visited this node, continue
@@ -77,16 +89,18 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
                 {
                     // Update the neighbor's cost
                     neighbor.GCost = neighborCost;
-                    neighbor.HCost = mMap.GetTravelCost(neighbor, mEndPosition);
+                    neighbor.HCost = mMap.GetTravelCost(neighbor, endPos);
                     neighbor.Parent = currentNode;
 
                     if (!openSet.Contains(neighbor))
                     {
                         openSet.Push(neighbor);
+                        Debug.Log($"Add to openset with {neighbor.Position}");
                     }
                     else
                     {
                         openSet.UpdateItem(neighbor);
+                        Debug.Log($"Update openset with {neighbor.Position}");
                     }
                 }
             }
@@ -96,7 +110,7 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
 
         if (pathSuccess)
         {
-            path = RetracePath(mStartPosition, mEndPosition);
+            path = RetracePath(startPos, endPos);
         }
 
         Debug.Log($"AStar found a way {pathSuccess}");
@@ -115,8 +129,11 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
         AStarPosition currentPos = end;
 
         // Retrace the path
-        while (currentPos != start.Parent)
+        while (!start.Equals(currentPos))
         {
+            currentPos.GCost = 0;
+            currentPos.HCost = 0;
+
             path.Add(currentPos);
             currentPos = currentPos.Parent;
         }
@@ -128,6 +145,21 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
         mDebugPath = path;
 
         return path;
+    }
+
+    /// <summary>
+    /// Place a debug tile on the given position
+    /// </summary>
+    /// <param name="pos">The searched position</param>
+    private void DebugPosition(Vector3Int pos)
+    {
+        Debug.Log($"Explored pos {pos}");
+        if (DebugTilemap == null || DebugTileBase == null)
+        {
+            return;
+        }
+
+        DebugTilemap.SetTile(pos, DebugTileBase);
     }
 
     private void OnDrawGizmos()

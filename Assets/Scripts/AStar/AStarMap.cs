@@ -18,26 +18,37 @@ public class AStarMap : ScriptableObject, ISearchableMap
     public void CreateGrid()
     {
         Map = Instantiate(MapGridPrefab);
-        if (Map != null)
+        if (Map == null)
         {
-            if (Map.TryGetComponent(out Tilemap tm))
+            Debug.LogError("Failed to instatiate the grid prefab!");
+            return;
+        }
+
+        Tilemap tm = Map.GetComponentInChildren<Tilemap>();
+        if (tm == null)
+        {
+            Debug.LogError("No tilemap found as a child of the grid prefab!");
+            return;
+        }
+
+        MapTilemap = tm;
+
+        Vector3Int newPos = Vector3Int.zero;
+        BoundsInt bounds = MapTilemap.cellBounds;
+
+        Debug.Log($"Tile map size: {bounds}");
+
+        for (int x = bounds.x; x < bounds.xMax; x++)
+        {
+            for (int y = bounds.y; y < bounds.yMax; y++)
             {
-                MapTilemap = tm;
+                newPos.x = x;
+                newPos.y = y;
 
-                Vector3Int newPos = Vector3Int.zero;
-                BoundsInt bounds = MapTilemap.cellBounds;
-                for (int x = bounds.x; x < bounds.xMax; x++)
-                {
-                    for (int y = bounds.y; y < bounds.yMax; y++)
-                    {
-                        newPos.x = x;
-                        newPos.y = y;
-
-                        Positions.Add(newPos, new AStarPosition(newPos));
-                    }
-                }
+                Positions.Add(newPos, new AStarPosition(newPos));
             }
         }
+        
     }
 
     /// <summary>
@@ -51,16 +62,15 @@ public class AStarMap : ScriptableObject, ISearchableMap
 
             Map = null;
             MapTilemap = null;
+
+            Positions.Clear();
         }
     }
 
     public int Size {
         get
         {
-            if (MapTilemap == null)
-                return 0;
-
-            return (int)MapTilemap.size.magnitude;
+            return Positions.Count;
         }
     }
 
@@ -93,6 +103,16 @@ public class AStarMap : ScriptableObject, ISearchableMap
         Debug.Log($"Found {neighbors.Count} neighbor(s)");
 
         return neighbors;
+    }
+
+    public ISearchablePosition GetPosition(Vector3Int position)
+    {
+        if (Positions.TryGetValue(position, out AStarPosition searchablePosition))
+        {
+            return searchablePosition;
+        }
+
+        return null;
     }
 
     /// <summary>

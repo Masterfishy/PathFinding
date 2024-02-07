@@ -1,7 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -21,7 +20,32 @@ public class EntityController : MonoBehaviour
         Debug.Log($"Path Received! {pathSuccess}");
         if (pathSuccess)
         {
+            Debug.Log($"Path length: {path.Count}");
             mDebugPath = path;
+        }
+    }
+
+    private void RequestPath(ISearchablePosition start, ISearchablePosition end)
+    {
+        PathRequest request = new(1, start, end, OnPathFound);
+        PathRequestEvent.RaiseEvent(request);
+    }
+
+    private void OnEnable()
+    {
+        mDebugPath = new();
+    }
+
+    private void Update()
+    {
+        if (mDebugPath.Count > 1 &&
+            (Vector3Int.Distance(Vector3Int.FloorToInt(transform.position), 
+                                 Vector3Int.FloorToInt(mDebugPath[0].Position)) > 2f ||
+             Vector3Int.Distance(Vector3Int.FloorToInt(EndPos.position), 
+                                 Vector3Int.FloorToInt(mDebugPath[^1].Position)) > 2f))
+        {
+            RequestPath(new AStarPosition(Vector3Int.FloorToInt(transform.position)), new AStarPosition(Vector3Int.FloorToInt(EndPos.position)));
+            return;
         }
     }
 

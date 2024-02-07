@@ -113,7 +113,7 @@ public class SourceEvictingTaskQueue<S, T>
         if (mQueuedSources.TryGetValue(source, out int index))
         {
             // Set the index to the last item to remove it
-            mTaskQueue[index] = mTaskQueue[mEnqueueIndex - 1];
+            mTaskQueue[index] = mTaskQueue[(mEnqueueIndex - 1) % mCapacity];
 
             // Move the Enqueue index
             mEnqueueIndex = (mEnqueueIndex - 1) % mCapacity;
