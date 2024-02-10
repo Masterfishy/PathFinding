@@ -15,7 +15,7 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
     private AStarPosition mStartPosition;
     private AStarPosition mEndPosition;
     private AStarMap mMap;
-    private Action<List<ISearchablePosition>> mCallback;
+    private Action<List<ISearchablePosition>, bool> mCallback;
 
     [Header("Debug")]
     public Color DebugPathColor;
@@ -23,7 +23,7 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
     public TileBase DebugTileBase;
     private List<ISearchablePosition> mDebugPath;
 
-    public void FindPath(ISearchablePosition start, ISearchablePosition end, ISearchableMap map, Action<List<ISearchablePosition>> callback)
+    public void FindPath(ISearchablePosition start, ISearchablePosition end, ISearchableMap map, Action<List<ISearchablePosition>, bool> callback)
     {
         mStartPosition = start as AStarPosition;
         mEndPosition = end as AStarPosition;
@@ -114,7 +114,7 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
         }
 
         Debug.Log($"AStar found a way {pathSuccess}");
-        mCallback(path);
+        mCallback(path, pathSuccess);
     }
 
     /// <summary>

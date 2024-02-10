@@ -40,15 +40,14 @@ public class PathFinder : MonoBehaviour
     /// Callback function triggered when a path request task is processed
     /// </summary>
     /// <param name="path"></param>
-    public void OnFinishedProcessingRequest(List<ISearchablePosition> path)
+    /// <param name="success">True if a valid path was found</param>
+    public void OnFinishedProcessingRequest(List<ISearchablePosition> path, bool success)
     {
         Debug.Log($"Path Finder callback! {mIsProcessingTask}, {mCurrentRequest}");
         if (!mIsProcessingTask || mCurrentRequest == null)
         {
             return;
         }
-
-        bool success = path.Count != 0;
 
         // Trigger the callback of the path request
         mCurrentRequest.OnPathComplete(path, success);
