@@ -1,19 +1,87 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Events;
+using UnityEngine.InputSystem;
+using System.Reflection;
+
+
 
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
 
-public class EntityController : MonoBehaviour
+public class EntityController : MonoBehaviour // IInputListener
 {
     public PathRequestEvent PathRequestEvent;
-    public Transform StartPos;
-    public Transform EndPos;
+    public float RerequestDistance;
+    public Transform Target;
+
+    public float Speed;
+
+    [Header("Input Settings")]
+    public InputReader InputReader;
+    public string PositiveXAction;
+    public string NegativeXAction;
+    public string PositiveYAction;
+    public string NegativeYAction;
 
     [Header("Debug")]
     public Color DebugPathColor;
     private List<ISearchablePosition> mDebugPath;
+
+    private Vector3 mVelocity;
+
+    public void OnPositiveXAction(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            mVelocity.x = 1;
+        }
+
+        if (context.canceled)
+        {
+            mVelocity.x = 0;
+        }
+    }
+
+    public void OnNegativeXAction(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            mVelocity.x = -1;
+        }
+
+        if (context.canceled)
+        {
+            mVelocity.x = 0;
+        }
+    }
+
+    public void OnPositiveYAction(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            mVelocity.y = 1;
+        }
+
+        if (context.canceled)
+        {
+            mVelocity.y = 0;
+        }
+    }
+
+    public void OnNegativeYAction(InputAction.CallbackContext context)
+    {
+        if (context.performed)
+        {
+            mVelocity.y = -1;
+        }
+
+        if (context.canceled)
+        {
+            mVelocity.y = 0;
+        }
+    }
 
     public void OnPathFound(List<ISearchablePosition> path, bool pathSuccess)
     {
@@ -31,80 +99,162 @@ public class EntityController : MonoBehaviour
         PathRequestEvent.RaiseEvent(request);
     }
 
+    /// <summary>
+    /// Use reflection to find a UnityAction named ActionName from InputReader and register the corresponding EntityController callback
+    /// </summary>
+    /// <param name="actionName">The name of the UnityAction in InputReader</param>
+    /// <param name="actionCallback">The callback to register to the UnityAction</param>
+    private void RegisterActionCallback(string actionName, UnityAction<InputAction.CallbackContext> actionCallback)
+    {
+        if (actionName == null || actionCallback == null || InputReader == null)
+            return;
+
+        FieldInfo fieldInfo = InputReader.GetType().GetField(actionName, BindingFlags.Public | BindingFlags.Instance);
+        //Debug.Log($"Field Info {fieldInfo}");
+        if (fieldInfo != null)
+        {
+            //Debug.Log($"Field Value {fieldInfo.GetValue(InputReader)}");
+            if (fieldInfo.GetValue(InputReader) is UnityEvent<InputAction.CallbackContext> fieldValue)
+            {
+                //Debug.Log($"Registered {actionCallback} to {fieldValue}");
+                fieldValue.AddListener(actionCallback);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Use reflection to find a UnityAction named ActionName from InputReader and unregister the corresponding EntityController callback
+    /// </summary>
+    /// <param name="actionName">The name of the UnityAction in InputReader</param>
+    /// <param name="actionCallback">The callback to unregister from the UnityAction</param>
+    private void UnregisterActionCallback(string actionName, UnityAction<InputAction.CallbackContext> actionCallback)
+    {
+        if (actionName == null || actionCallback == null || InputReader == null)
+            return;
+
+        FieldInfo fieldInfo = typeof(InputReader).GetField(actionName, BindingFlags.Public | BindingFlags.Instance);
+        if (fieldInfo != null)
+        {
+            if (fieldInfo.GetValue(InputReader) is UnityEvent<InputAction.CallbackContext> fieldValue)
+            {
+                fieldValue.RemoveListener(actionCallback);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Check if the conditions for requesting a path are met
+    /// </summary>
+    /// <returns>True if conditions are met; false otherwise</returns>
+    private bool CheckRequestConditions()
+    {
+        if (Target == null)
+            return false;
+
+        if (mDebugPath.Count == 0)
+            return true;
+
+        float targetDistanceFromLastPathPoint = Vector3Int.Distance(Vector3Int.FloorToInt(Target.position), 
+                                                                    Vector3Int.FloorToInt(mDebugPath[^1].Position));
+        return targetDistanceFromLastPathPoint > RerequestDistance;
+    }
+
     private void OnEnable()
     {
         mDebugPath = new();
+        mVelocity = Vector3.zero;
+
+        RegisterActionCallback(PositiveXAction, OnPositiveXAction);
+        RegisterActionCallback(NegativeXAction, OnNegativeXAction);
+        RegisterActionCallback(PositiveYAction, OnPositiveYAction);
+        RegisterActionCallback(NegativeYAction, OnNegativeYAction);
+    }
+
+    private void OnDisable()
+    {
+        UnregisterActionCallback(PositiveXAction, OnPositiveXAction);
+        UnregisterActionCallback(NegativeXAction, OnNegativeXAction);
+        UnregisterActionCallback(PositiveYAction, OnPositiveYAction);
+        UnregisterActionCallback(NegativeYAction, OnNegativeYAction);
     }
 
     private void Update()
     {
-        if (mDebugPath.Count > 1 &&
-            (Vector3Int.Distance(Vector3Int.FloorToInt(transform.position), 
-                                 Vector3Int.FloorToInt(mDebugPath[0].Position)) > 2f ||
-             Vector3Int.Distance(Vector3Int.FloorToInt(EndPos.position), 
-                                 Vector3Int.FloorToInt(mDebugPath[^1].Position)) > 2f))
+        //Debug.Log(mVelocity);
+        transform.position += mVelocity.normalized * Speed * Time.deltaTime;
+
+        if (CheckRequestConditions())
         {
-            RequestPath(new AStarPosition(Vector3Int.FloorToInt(transform.position)), new AStarPosition(Vector3Int.FloorToInt(EndPos.position)));
+            RequestPath(new AStarPosition(Vector3Int.FloorToInt(transform.position)), new AStarPosition(Vector3Int.FloorToInt(Target.position)));
             return;
         }
     }
 
     private void OnDrawGizmos()
     {
-        if (Application.isEditor)
+        if (mDebugPath != null && mDebugPath.Count != 0)
         {
-            return;
+            // Draw the path
+            for (int i = 1; i < mDebugPath.Count; i++)
+            {
+                Vector3 point = mDebugPath[i].Position;
+                point.x += 0.5f;
+                point.y += 0.5f;
+
+                Vector3 nextPoint = mDebugPath[i - 1].Position;
+                nextPoint.x += 0.5f;
+                nextPoint.y += 0.5f;
+
+                Gizmos.color = DebugPathColor;
+                Gizmos.DrawWireSphere(point, 0.05f);
+                Gizmos.DrawLine(nextPoint, point);
+            }
+
+            // Draw rerequest distance
+            Gizmos.color = DebugPathColor;
+            Vector3 spot = mDebugPath[^1].Position;
+            spot.x += 0.5f;
+            spot.y += 0.5f;
+
+            Gizmos.DrawWireSphere(spot, RerequestDistance);
         }
 
-        // Draw the path
-        for (int i = 1; i < mDebugPath.Count; i++)
-        {
-            Gizmos.color = DebugPathColor;
-            Gizmos.DrawSphere(mDebugPath[i].Position, 0.05f);
-            Gizmos.DrawLine(mDebugPath[i - 1].Position, mDebugPath[i].Position);
-        }
     }
 }
 
 #if UNITY_EDITOR
-[CustomEditor(typeof(EntityController))]
+//[CustomEditor(typeof(EntityController))]
 public class EntityControllerEditor : Editor
 {
-    public SerializedProperty PathRequestEventProp;
-    public SerializedProperty DebugPathColorProp;
-
-    public SerializedProperty StartPosProp;
-    public SerializedProperty EndPosProp;
+    private SerializedProperty serializedProperty;
 
     private void OnEnable()
     {
-        PathRequestEventProp = serializedObject.FindProperty("PathRequestEvent");
-        DebugPathColorProp = serializedObject.FindProperty("DebugPathColor");
-        StartPosProp = serializedObject.FindProperty("StartPos");
-        EndPosProp = serializedObject.FindProperty("EndPos");
+        serializedProperty = serializedObject.GetIterator();
+        serializedProperty.Next(true);
     }
 
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
 
-        EditorGUILayout.PropertyField(PathRequestEventProp);
-        EditorGUILayout.PropertyField(DebugPathColorProp);
-        EditorGUILayout.PropertyField(StartPosProp);
-        EditorGUILayout.PropertyField(EndPosProp);
+        while (serializedProperty.NextVisible(false))
+        {
+            EditorGUILayout.PropertyField(serializedProperty, true);
+        }
 
         serializedObject.ApplyModifiedProperties();
 
-        Transform startPos = StartPosProp.objectReferenceValue as Transform;
-        Transform endPos = EndPosProp.objectReferenceValue as Transform;
+        //Transform startPos = StartPosProp.objectReferenceValue as Transform;
+        //Transform endPos = EndPosProp.objectReferenceValue as Transform;
 
-        EntityController targetEvent = target as EntityController;
+        //EntityController targetEvent = target as EntityController;
 
-        if (GUILayout.Button("Request Path") && startPos != null && endPos != null)
-        {
-            PathRequest request = new(1, new AStarPosition(Vector3Int.FloorToInt(startPos.position)), new AStarPosition(Vector3Int.FloorToInt(endPos.position)), targetEvent.OnPathFound);
-            targetEvent.PathRequestEvent.RaiseEvent(request);
-        }
+        //if (GUILayout.Button("Request Path") && startPos != null && endPos != null)
+        //{
+        //    PathRequest request = new(1, new AStarPosition(Vector3Int.FloorToInt(startPos.position)), new AStarPosition(Vector3Int.FloorToInt(endPos.position)), targetEvent.OnPathFound);
+        //    targetEvent.PathRequestEvent.RaiseEvent(request);
+        //}
         
     }
 }

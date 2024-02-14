@@ -21,7 +21,7 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
     public Color DebugPathColor;
     public Tilemap DebugTilemap;
     public TileBase DebugTileBase;
-    private List<ISearchablePosition> mDebugPath;
+    public bool DoDebug;
 
     public void FindPath(ISearchablePosition start, ISearchablePosition end, ISearchableMap map, Action<List<ISearchablePosition>, bool> callback)
     {
@@ -49,6 +49,13 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
         // Get the map's position for start and end
         AStarPosition startPos = mMap.GetPosition(Vector3Int.FloorToInt(mStartPosition.Position)) as AStarPosition;
         AStarPosition endPos = mMap.GetPosition(Vector3Int.FloorToInt(mEndPosition.Position)) as AStarPosition;
+
+        // If either positions does not exist in the map, end the search
+        if (startPos == null || endPos == null)
+        {
+            mCallback(path, pathSuccess);
+            yield break;
+        }
 
         // The openSet stores all discovered nodes with the cheapest one at the top
         MinHeap<AStarPosition> openSet = new(mMap.Size * 10);
@@ -142,8 +149,6 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
 
         // TODO simplify the path
 
-        mDebugPath = path;
-
         return path;
     }
 
@@ -154,27 +159,11 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
     private void DebugPosition(Vector3Int pos)
     {
         Debug.Log($"Explored pos {pos}");
-        if (DebugTilemap == null || DebugTileBase == null)
+        if (!DoDebug || DebugTilemap == null || DebugTileBase == null)
         {
             return;
         }
 
         DebugTilemap.SetTile(pos, DebugTileBase);
-    }
-
-    private void OnDrawGizmos()
-    {
-        if (Application.isEditor)
-        {
-            return;
-        }
-
-        // Draw the path
-        for (int i = 1; i < mDebugPath.Count; i++)
-        {
-            Gizmos.color = DebugPathColor;
-            Gizmos.DrawSphere(mDebugPath[i].Position, 0.05f);
-            Gizmos.DrawLine(mDebugPath[i - 1].Position, mDebugPath[i].Position);
-        }
     }
 }

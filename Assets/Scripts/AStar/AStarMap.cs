@@ -12,6 +12,10 @@ public class AStarMap : ScriptableObject, ISearchableMap
     private Tilemap MapTilemap;
     private Dictionary<Vector3Int, AStarPosition> Positions = new();
 
+    [field: Header("Movement Costs")]
+    public int DiagonalMoveCost;
+    public int AdjacentMoveCost;
+
     /// <summary>
     /// Instantiate the grid prefab
     /// </summary>
@@ -122,7 +126,15 @@ public class AStarMap : ScriptableObject, ISearchableMap
     /// <param name="endPos">The ending position</param>
     /// <returns>The positive integer vector distance between the two positions</returns>
     public int GetTravelCost(ISearchablePosition startPos, ISearchablePosition endPos)
-    {        
-        return (int)Mathf.Abs(Vector3.Distance(startPos.Position, endPos.Position));
+    {
+        int xDistance = (int)Mathf.Abs(startPos.Position.x - endPos.Position.x);
+        int yDistance = (int)Mathf.Abs(startPos.Position.y - endPos.Position.y);
+
+        if (xDistance > yDistance)
+        {
+            return DiagonalMoveCost * yDistance + AdjacentMoveCost * (xDistance - yDistance);
+        }
+
+        return DiagonalMoveCost * xDistance + AdjacentMoveCost * (yDistance - xDistance);
     }
 }
