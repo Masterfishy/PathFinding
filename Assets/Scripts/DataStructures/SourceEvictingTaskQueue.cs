@@ -93,7 +93,7 @@ public class SourceEvictingTaskQueue<S, T>
     /// <returns>True if the queue is full; false otherwise</returns>
     public bool IsFull()
     {
-        return (mEnqueueIndex + 1) % mCapacity == mDequeueIndex;
+        return Mod(mEnqueueIndex + 1, mCapacity) == mDequeueIndex;
     }
 
     /// <summary>
@@ -109,15 +109,8 @@ public class SourceEvictingTaskQueue<S, T>
             throw new ArgumentNullException(paramName: nameof(source), "Source cannot be null");
         }
 
-        // Check if source has a task in the queue
-        if (mQueuedSources.TryGetValue(source, out int index))
-        {
-            // Set the index to the last item to remove it
-            mTaskQueue[index] = mTaskQueue[(mEnqueueIndex - 1) % mCapacity];
-
-            // Move the Enqueue index
-            mEnqueueIndex = (mEnqueueIndex - 1) % mCapacity;
-        }
+        // Remove the source if it exists in the task queue already
+        Remove(source);
 
         // If queue is full, grow the capacity
         if (IsFull())
@@ -130,7 +123,7 @@ public class SourceEvictingTaskQueue<S, T>
         mQueuedSources[source] = mEnqueueIndex;
 
         // Move the enqueue index
-        mEnqueueIndex = (mEnqueueIndex + 1) % mCapacity;
+        mEnqueueIndex = Mod(mEnqueueIndex + 1, mCapacity);
     }
 
     /// <summary>
@@ -151,12 +144,42 @@ public class SourceEvictingTaskQueue<S, T>
         mTaskQueue[mDequeueIndex] = null;
 
         // Remove the source from the queued sources
-        mQueuedSources.Remove(toReturn.Origin);
+        mQueuedSources.Remove(toReturn.Id);
 
         // Update the dequeue index
-        mDequeueIndex = (mDequeueIndex + 1) % mCapacity;
+        mDequeueIndex = Mod(mDequeueIndex + 1, mCapacity);
 
         return toReturn.Data;
+    }
+
+    /// <summary>
+    /// Remove a source from the task queue if it is contained
+    /// </summary>
+    /// <param name="source">The source to remove</param>
+    public void Remove(S source)
+    {
+        if (mQueuedSources.TryGetValue(source, out int index))
+        {
+            int lastEntryIndex = Mod(mEnqueueIndex - 1, mCapacity);
+
+            Debug.Log($"Removing {source}. Last entry index: {lastEntryIndex}. TaskQueue: Count:{Count}, Capacity:{mCapacity}, Enqueue index: {mEnqueueIndex}");
+
+            // Get the last entry and set it's index to the to-be-removed source's index
+            TaskEntry<S, T> lastEntry = mTaskQueue[lastEntryIndex];
+            if (lastEntry != null)
+            {
+                mQueuedSources[lastEntry.Id] = index;
+            }
+
+            // Set the item at the index to the last item
+            mTaskQueue[index] = mTaskQueue[lastEntryIndex];
+
+            // Move the Enqueue index
+            mEnqueueIndex = Mod(mEnqueueIndex - 1, mCapacity);
+
+            // Remove the source
+            mQueuedSources.Remove(source);
+        }
     }
 
     /// <summary>
@@ -174,18 +197,36 @@ public class SourceEvictingTaskQueue<S, T>
     }
 
     /// <summary>
+    /// Calculate the canonical modulous (x mod y)
+    /// </summary>
+    /// <param name="x">The numerator</param>
+    /// <param name="y">The denominator</param>
+    /// <returns>The canonical modulous of x</returns>
+    private int Mod(int x, int y)
+    {
+        int mod = x % y;
+
+        if (mod < 0)
+        {
+            mod = y + mod;
+        }
+
+        return mod;
+    }
+
+    /// <summary>
     /// Internal class to represent elements stored in a task queue
     /// </summary>
     /// <typeparam name="I">The identifying type</typeparam>
     /// <typeparam name="D">The type of the data</typeparam>
     private class TaskEntry<I, D>
     {
-        public I Origin;
+        public I Id;
         public D Data;
 
         public TaskEntry(I id, D data)
         {
-            Origin = id;
+            Id = id;
             Data = data;
         }
     }

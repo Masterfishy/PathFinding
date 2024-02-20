@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.Policy;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -180,6 +181,9 @@ public class TaskQueueTest
         Assert.That(actualResult, Is.EqualTo(lastTask));
     }
 
+    /// <summary>
+    /// Test enqueuing a null source
+    /// </summary>
     [Test]
     public void TestNullSourceEnqueue()
     {
@@ -205,4 +209,25 @@ public class TaskQueueTest
         Assert.That(taskQueue.Capacity, Is.EqualTo(1));
         Assert.That(caughtException, Is.Not.Null);
     }
+
+    /// <summary>
+    /// Test pushing the enqueue and dequeue index around a small array
+    /// </summary>
+    [Test]
+    public void TestCircularEnqueuing()
+    {
+        // Arrange
+        SourceEvictingTaskQueue<string, int> taskQueue = new(2);
+
+        // Act and Assert
+        taskQueue.Enqueue("first", 1);
+        taskQueue.Enqueue("first", 2);
+        Assert.That(taskQueue.Dequeue(), Is.EqualTo(2));
+
+        taskQueue.Enqueue("first", 3);
+        taskQueue.Enqueue("first", 4);
+        taskQueue.Enqueue("first", 5);
+        Assert.That(taskQueue.Dequeue(), Is.EqualTo(5));
+    }
+
 }
