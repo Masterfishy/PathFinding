@@ -21,7 +21,7 @@ public interface ISearchAlgorithm
     /// <param name="end">The end position</param>
     /// <param name="map">The search able map the positions are found on</param>
     /// <param name="callback">The callback to report the found path</param>
-    public void FindPath(ISearchablePosition start, ISearchablePosition end, ISearchableMap map, Action<List<ISearchablePosition>, bool> callback);
+    public void FindPath(Vector3 start, Vector3 end, ISearchableMap map, Action<List<ISearchablePosition>, bool> callback);
 }
 
 /// <summary>

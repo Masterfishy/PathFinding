@@ -1,4 +1,3 @@
-using Codice.Client.BaseCommands;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -34,12 +33,15 @@ public class PathFinder : MonoBehaviour
         Debug.Log($"Requesting Path: {request}");
         // Add it to the queue
         mTaskQueue.Enqueue(request.Source, request);
+
+        // We want to cancel a current request that has the same source as the new request
+
     }
 
     /// <summary>
     /// Callback function triggered when a path request task is processed
     /// </summary>
-    /// <param name="path"></param>
+    /// <param name="path">A path result from a search algorithm</param>
     /// <param name="success">True if a valid path was found</param>
     public void OnFinishedProcessingRequest(List<ISearchablePosition> path, bool success)
     {
@@ -71,6 +73,7 @@ public class PathFinder : MonoBehaviour
 
     private void Update()
     {
+        Debug.Log($"PathFinder: is path finding {mIsProcessingTask}");
         if (SearchAlgorithm != null && !mIsProcessingTask && !mTaskQueue.IsEmpty())
         {
             // Dequeue
@@ -96,8 +99,8 @@ public class PathFinder : MonoBehaviour
 public class PathRequest
 {
     public int Source;
-    public ISearchablePosition PathStart;
-    public ISearchablePosition PathEnd;
+    public Vector3 PathStart;
+    public Vector3 PathEnd;
 
     /// <summary>
     /// A delegate callback that returns a discovered path and a bool to indicate the success of the request.
@@ -111,7 +114,7 @@ public class PathRequest
     /// <param name="pathStart">The starting position of the path</param>
     /// <param name="pathEnd">The ending position of the path</param>
     /// <param name="onPathComplete">The callback to trigger to return the discovered path</param>
-    public PathRequest(int source, ISearchablePosition pathStart, ISearchablePosition pathEnd, Action<List<ISearchablePosition>, bool> onPathComplete)
+    public PathRequest(int source, Vector3 pathStart, Vector3 pathEnd, Action<List<ISearchablePosition>, bool> onPathComplete)
     {
         Source = source;
         PathStart = pathStart;
@@ -121,6 +124,6 @@ public class PathRequest
 
     public override string ToString()
     {
-        return $"Request: Source={Source}, Start={PathStart.Position}, End={PathEnd.Position}, Callback={OnPathComplete}";
+        return $"Request: Source={Source}, Start={PathStart}, End={PathEnd}, Callback={OnPathComplete}";
     }
 }

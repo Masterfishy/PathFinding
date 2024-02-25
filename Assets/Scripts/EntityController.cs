@@ -93,7 +93,7 @@ public class EntityController : MonoBehaviour // IInputListener
         }
     }
 
-    private void RequestPath(ISearchablePosition start, ISearchablePosition end)
+    private void RequestPath(Vector3 start, Vector3 end)
     {
         PathRequest request = new(1, start, end, OnPathFound);
         PathRequestEvent.RaiseEvent(request);
@@ -181,12 +181,11 @@ public class EntityController : MonoBehaviour // IInputListener
     private void Update()
     {
         //Debug.Log(mVelocity);
-        transform.position += mVelocity.normalized * Speed * Time.deltaTime;
+        transform.position += Speed * Time.deltaTime * mVelocity.normalized;
 
         if (CheckRequestConditions())
         {
-            RequestPath(new AStarPosition(Vector3Int.FloorToInt(transform.position)), new AStarPosition(Vector3Int.FloorToInt(Target.position)));
-            return;
+            RequestPath(transform.position, Target.position);
         }
     }
 

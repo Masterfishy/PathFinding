@@ -12,8 +12,8 @@ using UnityEngine.Tilemaps;
 /// </summary>
 public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
 {
-    private AStarPosition mStartPosition;
-    private AStarPosition mEndPosition;
+    private Vector3 mStartPosition;
+    private Vector3 mEndPosition;
     private AStarMap mMap;
     private Action<List<ISearchablePosition>, bool> mCallback;
 
@@ -23,16 +23,16 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
     public TileBase DebugTileBase;
     public bool DoDebug;
 
-    public void FindPath(ISearchablePosition start, ISearchablePosition end, ISearchableMap map, Action<List<ISearchablePosition>, bool> callback)
+    public void FindPath(Vector3 start, Vector3 end, ISearchableMap map, Action<List<ISearchablePosition>, bool> callback)
     {
-        mStartPosition = start as AStarPosition;
-        mEndPosition = end as AStarPosition;
+        mStartPosition = start;
+        mEndPosition = end;
         mMap = map as AStarMap;
         mCallback = callback;
 
         DebugTilemap.ClearAllTiles();
 
-        Debug.Log($"Starting search...: Start={mStartPosition.Position}, End={mEndPosition.Position}, Map={mMap}:{mMap.Size}, Callback={mCallback}");
+        Debug.Log($"Starting search...: Start={mStartPosition}, End={mEndPosition}, Map={mMap}:{mMap.Size}, Callback={mCallback}");
 
         StopAllCoroutines();
         StartCoroutine(FindPathCoroutine());
@@ -47,8 +47,8 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
         bool pathSuccess = false;
 
         // Get the map's position for start and end
-        AStarPosition startPos = mMap.GetPosition(Vector3Int.FloorToInt(mStartPosition.Position)) as AStarPosition;
-        AStarPosition endPos = mMap.GetPosition(Vector3Int.FloorToInt(mEndPosition.Position)) as AStarPosition;
+        AStarPosition startPos = mMap.GetPosition(Vector3Int.FloorToInt(mStartPosition)) as AStarPosition;
+        AStarPosition endPos = mMap.GetPosition(Vector3Int.FloorToInt(mEndPosition)) as AStarPosition;
 
         // If either positions does not exist in the map, end the search
         if (startPos == null || endPos == null)

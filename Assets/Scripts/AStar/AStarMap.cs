@@ -109,6 +109,12 @@ public class AStarMap : ScriptableObject, ISearchableMap
         return neighbors;
     }
 
+    /// <summary>
+    /// Get the AStarPosition at the given position
+    /// </summary>
+    /// <param name="position">The vector position</param>
+    /// <returns>The AStarPosition at the given position. Returns null if the 
+    /// position does not exist.</returns>
     public ISearchablePosition GetPosition(Vector3Int position)
     {
         if (Positions.TryGetValue(position, out AStarPosition searchablePosition))
