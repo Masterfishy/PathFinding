@@ -1,24 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class MapController : MonoBehaviour
 {
-    public SearchableMapUnityContainer MapContainer;
+    public Tilemap MapBuilder;
+    public Tilemap Map;
 
     private void OnEnable()
     {
-        if (MapContainer != null && MapContainer.Contents is AStarMap map)
-        {
-            map.CreateGrid();
-        }
+
     }
 
     private void OnDisable()
     {
-        if (MapContainer != null && MapContainer.Contents is AStarMap map)
-        {
-            map.DestroyGrid();
-        }
+
     }
 }

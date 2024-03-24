@@ -1,92 +1,61 @@
-using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using UnityEditor;
+using System.Security;
 
-[CreateAssetMenu(menuName ="A* Map")]
+[CreateAssetMenu(menuName ="A Star/A* Map")]
 public class AStarMap : ScriptableObject, ISearchableMap
 {
-    public GameObject MapGridPrefab;
-
-    private GameObject Map;
-    private Tilemap MapTilemap;
-    private Dictionary<Vector3Int, AStarPosition> Positions = new();
+    public Tilemap MapData;
 
     [field: Header("Movement Costs")]
     public int DiagonalMoveCost;
     public int AdjacentMoveCost;
 
+    private readonly Dictionary<Vector3Int, AStarPosition> m_Positions = new();
+
+    public int Size => m_Positions.Count;
+
     /// <summary>
-    /// Instantiate the grid prefab
+    /// Build the collection of A* positions from the base tilemap
     /// </summary>
-    public void CreateGrid()
+    public void BuildMap()
     {
-        Map = Instantiate(MapGridPrefab);
-        if (Map == null)
+        if (MapData == null)
         {
-            Debug.LogError("Failed to instatiate the grid prefab!");
+            Debug.LogWarning($"{name}: No tilemap data set.");
             return;
         }
 
-        Tilemap tm = Map.GetComponentInChildren<Tilemap>();
-        if (tm == null)
+        // Empty the A* positions
+        m_Positions.Clear();
+
+        Vector3Int buildPos = Vector3Int.zero;
+
+        // Add an A* Position for each position in the tilemap
+        for (int x = MapData.cellBounds.xMin; x < MapData.cellBounds.xMax; x++)
         {
-            Debug.LogError("No tilemap found as a child of the grid prefab!");
-            return;
-        }
-
-        MapTilemap = tm;
-
-        Vector3Int newPos = Vector3Int.zero;
-        BoundsInt bounds = MapTilemap.cellBounds;
-
-        Debug.Log($"Tile map size: {bounds}");
-
-        for (int x = bounds.x; x < bounds.xMax; x++)
-        {
-            for (int y = bounds.y; y < bounds.yMax; y++)
+            for (int y = MapData.cellBounds.yMin; y < MapData.cellBounds.yMax; y++)
             {
-                newPos.x = x;
-                newPos.y = y;
+                buildPos.x = x; 
+                buildPos.y = y;
 
-                Positions.Add(newPos, new AStarPosition(newPos));
+                if (MapData.HasTile(buildPos))
+                {
+                    m_Positions.Add(buildPos, new AStarPosition(buildPos));
+                }
             }
         }
-        
     }
 
-    /// <summary>
-    /// Destory the created grid
-    /// </summary>
-    public void DestroyGrid()
+    public List<Vector3> GetNeighbors(Vector3 position)
     {
-        if (Map != null)
-        {
-            Destroy(Map);
+        Debug.Log($"Finding neighbors for {position}...");
 
-            Map = null;
-            MapTilemap = null;
-
-            Positions.Clear();
-        }
-    }
-
-    public int Size {
-        get
-        {
-            return Positions.Count;
-        }
-    }
-
-    public List<ISearchablePosition> MapPositions => Positions.Values.ToList<ISearchablePosition>();
-
-    public List<ISearchablePosition> GetNeighbors(ISearchablePosition position)
-    {
-        Debug.Log($"Finding neighbors for {position.Position}...");
-
-        Vector3Int locus = Vector3Int.FloorToInt(position.Position);
+        Vector3Int locus = Vector3Int.FloorToInt(position);
         Vector3Int searchPos = Vector3Int.zero;
-        List<ISearchablePosition> neighbors = new();
+        List<Vector3> neighbors = new();
 
         // Search around the position for neighbors
         for (int x = locus.x - 1; x <= locus.x + 1; x++)
@@ -97,9 +66,9 @@ public class AStarMap : ScriptableObject, ISearchableMap
                 searchPos.y = y;
 
                 // If we have the neighbor, add it
-                if (Positions.TryGetValue(searchPos, out AStarPosition neighbor))
+                if (MapData.HasTile(searchPos))
                 {
-                    neighbors.Add(neighbor);
+                    neighbors.Add(searchPos);
                 }
             }
         }
@@ -113,13 +82,13 @@ public class AStarMap : ScriptableObject, ISearchableMap
     /// Get the AStarPosition at the given position
     /// </summary>
     /// <param name="position">The vector position</param>
-    /// <returns>The AStarPosition at the given position. Returns null if the 
-    /// position does not exist.</returns>
-    public ISearchablePosition GetPosition(Vector3Int position)
+    /// <returns>The AStarPosition at the given position. Returns null if
+    /// the position does not exist.</returns>
+    public AStarPosition GetPosition(Vector3Int position)
     {
-        if (Positions.TryGetValue(position, out AStarPosition searchablePosition))
+        if (m_Positions.TryGetValue(position, out AStarPosition astarPosition))
         {
-            return searchablePosition;
+            return astarPosition;
         }
 
         return null;
@@ -131,10 +100,10 @@ public class AStarMap : ScriptableObject, ISearchableMap
     /// <param name="startPos">The starting position</param>
     /// <param name="endPos">The ending position</param>
     /// <returns>The positive integer vector distance between the two positions</returns>
-    public int GetTravelCost(ISearchablePosition startPos, ISearchablePosition endPos)
+    public int GetTravelCost(Vector3 startPos, Vector3 endPos)
     {
-        int xDistance = (int)Mathf.Abs(startPos.Position.x - endPos.Position.x);
-        int yDistance = (int)Mathf.Abs(startPos.Position.y - endPos.Position.y);
+        int xDistance = (int)Mathf.Abs(startPos.x - endPos.x);
+        int yDistance = (int)Mathf.Abs(startPos.y - endPos.y);
 
         if (xDistance > yDistance)
         {
@@ -143,4 +112,55 @@ public class AStarMap : ScriptableObject, ISearchableMap
 
         return DiagonalMoveCost * xDistance + AdjacentMoveCost * (yDistance - xDistance);
     }
+
+    private void OnEnable()
+    {
+        BuildMap();
+    }
 }
+
+
+#if UNITY_EDITOR
+[CustomEditor(typeof(AStarMap))]
+public class AStarMapEditor : Editor
+{
+    SerializedProperty MapDataProp;
+    SerializedProperty DiagonalMoveCostProp;
+    SerializedProperty AdjacentMoveCostProp;
+
+    private void OnEnable()
+    {
+        MapDataProp = serializedObject.FindProperty("MapData");
+        DiagonalMoveCostProp = serializedObject.FindProperty("DiagonalMoveCost");
+        AdjacentMoveCostProp = serializedObject.FindProperty("AdjacentMoveCost");
+    }
+
+    public override void OnInspectorGUI()
+    {
+        serializedObject.Update();
+
+        AStarMap targetMap = target as AStarMap;
+        
+        targetMap.MapData = EditorGUILayout.ObjectField("MapData", MapDataProp.objectReferenceValue, typeof(Tilemap), true) as Tilemap;
+       
+        EditorGUILayout.PropertyField(DiagonalMoveCostProp);
+        EditorGUILayout.PropertyField(AdjacentMoveCostProp);
+
+        EditorGUILayout.Space();
+
+        if (GUILayout.Button("Rebuild Map"))
+        {
+            targetMap.BuildMap();
+
+            EditorUtility.SetDirty(targetMap);
+        }
+
+        if (targetMap.Size > 0)
+        {
+            EditorGUILayout.HelpBox("Map Data has been built!", MessageType.Info);
+        }
+
+        serializedObject.ApplyModifiedProperties();
+    }
+}
+#endif

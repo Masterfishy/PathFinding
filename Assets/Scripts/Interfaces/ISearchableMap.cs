@@ -20,12 +20,7 @@ public interface ISearchableMap
     /// </summary>
     /// <param name="position">The position to find neighbors of</param>
     /// <returns>A list of <c>ISearchablePosition</c>s that are neighbors of the given position</returns>
-    public List<ISearchablePosition> GetNeighbors(ISearchablePosition position);
-
-    /// <summary>
-    /// Get the collection of <c>ISearchablePosition</c>s in the map
-    /// </summary>
-    public List<ISearchablePosition> MapPositions { get; }
+    public List<Vector3> GetNeighbors(Vector3 position);
 
     /// <summary>
     /// Get the size of the map

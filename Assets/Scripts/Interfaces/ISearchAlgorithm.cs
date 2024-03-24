@@ -1,8 +1,7 @@
 using System;
 using System.Reflection;
 using UnityEngine;
-using System.Collections.Generic;
-
+using System.Collections;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -17,11 +16,9 @@ public interface ISearchAlgorithm
     /// <summary>
     /// Find a path from the start position to the end position.
     /// </summary>
-    /// <param name="start">The start position</param>
-    /// <param name="end">The end position</param>
-    /// <param name="map">The search able map the positions are found on</param>
+    /// <param name="pathRequest">The request to find a path for</param>
     /// <param name="callback">The callback to report the found path</param>
-    public void FindPath(Vector3 start, Vector3 end, ISearchableMap map, Action<List<ISearchablePosition>, bool> callback);
+    public IEnumerator FindPath(PathRequest pathRequest, Action<PathRequest> callback);
 }
 
 /// <summary>

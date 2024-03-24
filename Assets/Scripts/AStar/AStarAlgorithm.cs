@@ -1,5 +1,3 @@
-using Codice.Client.BaseCommands;
-using Codice.Client.Common.GameUI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -10,12 +8,10 @@ using UnityEngine.Tilemaps;
 /// <summary>
 /// A class that represents a search algorithm implemented with A*
 /// </summary>
-public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
+[CreateAssetMenu(menuName = "A Star/A* Search Algo")]
+public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
 {
-    private Vector3 mStartPosition;
-    private Vector3 mEndPosition;
-    private AStarMap mMap;
-    private Action<List<ISearchablePosition>, bool> mCallback;
+    public AStarMap AStarMap;
 
     [Header("Debug")]
     public Color DebugPathColor;
@@ -23,42 +19,27 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
     public TileBase DebugTileBase;
     public bool DoDebug;
 
-    public void FindPath(Vector3 start, Vector3 end, ISearchableMap map, Action<List<ISearchablePosition>, bool> callback)
-    {
-        mStartPosition = start;
-        mEndPosition = end;
-        mMap = map as AStarMap;
-        mCallback = callback;
-
-        DebugTilemap.ClearAllTiles();
-
-        Debug.Log($"Starting search...: Start={mStartPosition}, End={mEndPosition}, Map={mMap}:{mMap.Size}, Callback={mCallback}");
-
-        StopAllCoroutines();
-        StartCoroutine(FindPathCoroutine());
-    }
-
     /// <summary>
     /// A coroutine to find a path using the A* algorithm from start position to end position
     /// </summary>
-    private IEnumerator FindPathCoroutine()
+    public IEnumerator FindPath(PathRequest pathRequest, Action<PathRequest> callback)
     {
-        List<ISearchablePosition> path = new();
+        List<Vector3> path = new();
         bool pathSuccess = false;
 
         // Get the map's position for start and end
-        AStarPosition startPos = mMap.GetPosition(Vector3Int.FloorToInt(mStartPosition)) as AStarPosition;
-        AStarPosition endPos = mMap.GetPosition(Vector3Int.FloorToInt(mEndPosition)) as AStarPosition;
+        AStarPosition startPos = AStarMap.GetPosition(Vector3Int.FloorToInt(pathRequest.PathStart));
+        AStarPosition endPos = AStarMap.GetPosition(Vector3Int.FloorToInt(pathRequest.PathEnd));
 
         // If either positions does not exist in the map, end the search
         if (startPos == null || endPos == null)
         {
-            mCallback(path, pathSuccess);
+            CompleteRequest(pathRequest, callback, path, pathSuccess);
             yield break;
         }
 
         // The openSet stores all discovered nodes with the cheapest one at the top
-        MinHeap<AStarPosition> openSet = new(mMap.Size * 10);
+        MinHeap<AStarPosition> openSet = new(AStarMap.Size * 10);
 
         // The closedSet stores all the nodes we have visited
         HashSet<AStarPosition> closedSet = new();
@@ -81,9 +62,12 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
             }
 
             // Search for the next best neighbor
-            List<ISearchablePosition> neighbors = mMap.GetNeighbors(currentNode);
-            foreach(AStarPosition neighbor in neighbors.Cast<AStarPosition>())
+            List<Vector3> neighbors = AStarMap.GetNeighbors(currentNode.Position);
+            foreach(Vector3 neighborPos in neighbors)
             {
+                // Get the AStarPosition from the neighbor positions
+                AStarPosition neighbor = AStarMap.GetPosition(Vector3Int.FloorToInt(neighborPos));
+
                 Debug.Log($"Neighbor: {neighbor.Position}, Cost: {neighbor.Cost}");
                 if (closedSet.Contains(neighbor))
                 {
@@ -91,12 +75,12 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
                     continue;
                 }
 
-                int neighborCost = currentNode.GCost + mMap.GetTravelCost(currentNode, neighbor);
+                int neighborCost = currentNode.GCost + AStarMap.GetTravelCost(currentNode.Position, neighbor.Position);
                 if (neighborCost < neighbor.GCost || !openSet.Contains(neighbor))
                 {
                     // Update the neighbor's cost
                     neighbor.GCost = neighborCost;
-                    neighbor.HCost = mMap.GetTravelCost(neighbor, endPos);
+                    neighbor.HCost = AStarMap.GetTravelCost(neighbor.Position, endPos.Position);
                     neighbor.Parent = currentNode;
 
                     if (!openSet.Contains(neighbor))
@@ -121,7 +105,7 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
         }
 
         Debug.Log($"AStar found a way {pathSuccess}");
-        mCallback(path, pathSuccess);
+        CompleteRequest(pathRequest, callback, path, pathSuccess);
     }
 
     /// <summary>
@@ -130,9 +114,9 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
     /// <param name="start">The start position</param>
     /// <param name="end">The end position<param>
     /// <returns>An array of positions from start to end</returns>
-    private List<ISearchablePosition> RetracePath(AStarPosition start, AStarPosition end)
+    private List<Vector3> RetracePath(AStarPosition start, AStarPosition end)
     {
-        List<ISearchablePosition> path = new();
+        List<Vector3> path = new();
         AStarPosition currentPos = end;
 
         // Retrace the path
@@ -141,7 +125,7 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
             currentPos.GCost = 0;
             currentPos.HCost = 0;
 
-            path.Add(currentPos);
+            path.Add(currentPos.Position);
             currentPos = currentPos.Parent;
         }
 
@@ -165,5 +149,11 @@ public class AStarAlgorithm : MonoBehaviour, ISearchAlgorithm
         }
 
         DebugTilemap.SetTile(pos, DebugTileBase);
+    }
+
+    private void CompleteRequest(PathRequest request, Action<PathRequest> callback, List<Vector3> path, bool success)
+    {
+        request.SetPath(path, success);
+        callback(request);
     }
 }

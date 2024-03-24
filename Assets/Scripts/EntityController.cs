@@ -27,9 +27,11 @@ public class EntityController : MonoBehaviour // IInputListener
 
     [Header("Debug")]
     public Color DebugPathColor;
-    private List<ISearchablePosition> mDebugPath;
+    private List<Vector3> mDebugPath;
 
     private Vector3 mVelocity;
+
+    private bool m_IsRequesting;
 
     public void OnPositiveXAction(InputAction.CallbackContext context)
     {
@@ -83,7 +85,7 @@ public class EntityController : MonoBehaviour // IInputListener
         }
     }
 
-    public void OnPathFound(List<ISearchablePosition> path, bool pathSuccess)
+    public void OnPathFound(List<Vector3> path, bool pathSuccess)
     {
         Debug.Log($"Path Received! {pathSuccess}");
         if (pathSuccess)
@@ -91,6 +93,8 @@ public class EntityController : MonoBehaviour // IInputListener
             Debug.Log($"Path length: {path.Count}");
             mDebugPath = path;
         }
+
+        m_IsRequesting = false;
     }
 
     private void RequestPath(Vector3 start, Vector3 end)
@@ -151,18 +155,16 @@ public class EntityController : MonoBehaviour // IInputListener
         if (Target == null)
             return false;
 
-        if (mDebugPath.Count == 0)
-            return true;
-
         float targetDistanceFromLastPathPoint = Vector3Int.Distance(Vector3Int.FloorToInt(Target.position), 
-                                                                    Vector3Int.FloorToInt(mDebugPath[^1].Position));
-        return targetDistanceFromLastPathPoint > RerequestDistance;
+                                                                    Vector3Int.FloorToInt(mDebugPath[^1]));
+        return m_IsRequesting && targetDistanceFromLastPathPoint > RerequestDistance;
     }
 
     private void OnEnable()
     {
         mDebugPath = new();
         mVelocity = Vector3.zero;
+        m_IsRequesting = false;
 
         RegisterActionCallback(PositiveXAction, OnPositiveXAction);
         RegisterActionCallback(NegativeXAction, OnNegativeXAction);
@@ -186,6 +188,7 @@ public class EntityController : MonoBehaviour // IInputListener
         if (CheckRequestConditions())
         {
             RequestPath(transform.position, Target.position);
+            m_IsRequesting = true;
         }
     }
 
@@ -196,11 +199,11 @@ public class EntityController : MonoBehaviour // IInputListener
             // Draw the path
             for (int i = 1; i < mDebugPath.Count; i++)
             {
-                Vector3 point = mDebugPath[i].Position;
+                Vector3 point = mDebugPath[i];
                 point.x += 0.5f;
                 point.y += 0.5f;
 
-                Vector3 nextPoint = mDebugPath[i - 1].Position;
+                Vector3 nextPoint = mDebugPath[i - 1];
                 nextPoint.x += 0.5f;
                 nextPoint.y += 0.5f;
 
@@ -211,7 +214,7 @@ public class EntityController : MonoBehaviour // IInputListener
 
             // Draw rerequest distance
             Gizmos.color = DebugPathColor;
-            Vector3 spot = mDebugPath[^1].Position;
+            Vector3 spot = mDebugPath[^1];
             spot.x += 0.5f;
             spot.y += 0.5f;
 
