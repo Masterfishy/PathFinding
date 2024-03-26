@@ -18,7 +18,7 @@ public interface ISearchAlgorithm
     /// </summary>
     /// <param name="pathRequest">The request to find a path for</param>
     /// <param name="callback">The callback to report the found path</param>
-    public IEnumerator FindPath(PathRequest pathRequest, Action<PathRequest> callback);
+    public IEnumerator FindPath(PathRequest pathRequest, Action<PathResponse> callback);
 }
 
 /// <summary>

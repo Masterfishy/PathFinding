@@ -98,6 +98,24 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Left Click"",
+                    ""type"": ""Button"",
+                    ""id"": ""19d772b9-53f4-4319-ac80-8e2b408f0648"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Position"",
+                    ""type"": ""Value"",
+                    ""id"": ""1ba77b1d-09fd-43bc-b427-9164c43d110a"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -188,6 +206,28 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
                     ""action"": ""Right"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""1814815a-8d65-4efd-82a4-d001cb1284ad"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Left Click"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""6d519465-bcf8-429d-8274-f91d9347f808"",
+                    ""path"": ""<Mouse>/position"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Position"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -204,6 +244,8 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         m_Play_Left = m_Play.FindAction("Left", throwIfNotFound: true);
         m_Play_Down = m_Play.FindAction("Down", throwIfNotFound: true);
         m_Play_Right = m_Play.FindAction("Right", throwIfNotFound: true);
+        m_Play_LeftClick = m_Play.FindAction("Left Click", throwIfNotFound: true);
+        m_Play_Position = m_Play.FindAction("Position", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -273,6 +315,8 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Play_Left;
     private readonly InputAction m_Play_Down;
     private readonly InputAction m_Play_Right;
+    private readonly InputAction m_Play_LeftClick;
+    private readonly InputAction m_Play_Position;
     public struct PlayActions
     {
         private @GameInput m_Wrapper;
@@ -285,6 +329,8 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         public InputAction @Left => m_Wrapper.m_Play_Left;
         public InputAction @Down => m_Wrapper.m_Play_Down;
         public InputAction @Right => m_Wrapper.m_Play_Right;
+        public InputAction @LeftClick => m_Wrapper.m_Play_LeftClick;
+        public InputAction @Position => m_Wrapper.m_Play_Position;
         public InputActionMap Get() { return m_Wrapper.m_Play; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -318,6 +364,12 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
             @Right.started += instance.OnRight;
             @Right.performed += instance.OnRight;
             @Right.canceled += instance.OnRight;
+            @LeftClick.started += instance.OnLeftClick;
+            @LeftClick.performed += instance.OnLeftClick;
+            @LeftClick.canceled += instance.OnLeftClick;
+            @Position.started += instance.OnPosition;
+            @Position.performed += instance.OnPosition;
+            @Position.canceled += instance.OnPosition;
         }
 
         private void UnregisterCallbacks(IPlayActions instance)
@@ -346,6 +398,12 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
             @Right.started -= instance.OnRight;
             @Right.performed -= instance.OnRight;
             @Right.canceled -= instance.OnRight;
+            @LeftClick.started -= instance.OnLeftClick;
+            @LeftClick.performed -= instance.OnLeftClick;
+            @LeftClick.canceled -= instance.OnLeftClick;
+            @Position.started -= instance.OnPosition;
+            @Position.performed -= instance.OnPosition;
+            @Position.canceled -= instance.OnPosition;
         }
 
         public void RemoveCallbacks(IPlayActions instance)
@@ -373,5 +431,7 @@ public partial class @GameInput: IInputActionCollection2, IDisposable
         void OnLeft(InputAction.CallbackContext context);
         void OnDown(InputAction.CallbackContext context);
         void OnRight(InputAction.CallbackContext context);
+        void OnLeftClick(InputAction.CallbackContext context);
+        void OnPosition(InputAction.CallbackContext context);
     }
 }

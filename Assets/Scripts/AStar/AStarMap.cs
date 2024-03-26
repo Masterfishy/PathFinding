@@ -22,14 +22,13 @@ public class AStarMap : ScriptableObject, ISearchableMap
     /// </summary>
     public void BuildMap()
     {
-        if (MapData == null)
-        {
-            Debug.LogWarning($"{name}: No tilemap data set.");
-            return;
-        }
-
         // Empty the A* positions
         m_Positions.Clear();
+
+        if (MapData == null)
+        {
+            return;
+        }
 
         Vector3Int buildPos = Vector3Int.zero;
 
@@ -47,11 +46,13 @@ public class AStarMap : ScriptableObject, ISearchableMap
                 }
             }
         }
+
+        Debug.Log($"{name}: Built Map Data!");
     }
 
     public List<Vector3> GetNeighbors(Vector3 position)
     {
-        Debug.Log($"Finding neighbors for {position}...");
+        //Debug.Log($"Finding neighbors for {position}...");
 
         Vector3Int locus = Vector3Int.FloorToInt(position);
         Vector3Int searchPos = Vector3Int.zero;
@@ -73,7 +74,7 @@ public class AStarMap : ScriptableObject, ISearchableMap
             }
         }
 
-        Debug.Log($"Found {neighbors.Count} neighbor(s)");
+        //Debug.Log($"Found {neighbors.Count} neighbor(s)");
 
         return neighbors;
     }
@@ -84,9 +85,9 @@ public class AStarMap : ScriptableObject, ISearchableMap
     /// <param name="position">The vector position</param>
     /// <returns>The AStarPosition at the given position. Returns null if
     /// the position does not exist.</returns>
-    public AStarPosition GetPosition(Vector3Int position)
+    public AStarPosition ToAStarPosition(Vector3 position)
     {
-        if (m_Positions.TryGetValue(position, out AStarPosition astarPosition))
+        if (m_Positions.TryGetValue(Vector3Int.FloorToInt(position), out AStarPosition astarPosition))
         {
             return astarPosition;
         }
@@ -124,15 +125,19 @@ public class AStarMap : ScriptableObject, ISearchableMap
 [CustomEditor(typeof(AStarMap))]
 public class AStarMapEditor : Editor
 {
-    SerializedProperty MapDataProp;
-    SerializedProperty DiagonalMoveCostProp;
-    SerializedProperty AdjacentMoveCostProp;
+    private SerializedProperty m_MapDataProp;
+    private SerializedProperty m_DiagonalMoveCostProp;
+    private SerializedProperty m_AdjacentMoveCostProp;
+
+    private Tilemap m_PrevTileMap;
 
     private void OnEnable()
     {
-        MapDataProp = serializedObject.FindProperty("MapData");
-        DiagonalMoveCostProp = serializedObject.FindProperty("DiagonalMoveCost");
-        AdjacentMoveCostProp = serializedObject.FindProperty("AdjacentMoveCost");
+        m_MapDataProp = serializedObject.FindProperty("MapData");
+        m_DiagonalMoveCostProp = serializedObject.FindProperty("DiagonalMoveCost");
+        m_AdjacentMoveCostProp = serializedObject.FindProperty("AdjacentMoveCost");
+
+        m_PrevTileMap = m_MapDataProp.objectReferenceValue as Tilemap;
     }
 
     public override void OnInspectorGUI()
@@ -141,10 +146,10 @@ public class AStarMapEditor : Editor
 
         AStarMap targetMap = target as AStarMap;
         
-        targetMap.MapData = EditorGUILayout.ObjectField("MapData", MapDataProp.objectReferenceValue, typeof(Tilemap), true) as Tilemap;
+        targetMap.MapData = EditorGUILayout.ObjectField("MapData", m_MapDataProp.objectReferenceValue, typeof(Tilemap), true) as Tilemap;
        
-        EditorGUILayout.PropertyField(DiagonalMoveCostProp);
-        EditorGUILayout.PropertyField(AdjacentMoveCostProp);
+        EditorGUILayout.PropertyField(m_DiagonalMoveCostProp);
+        EditorGUILayout.PropertyField(m_AdjacentMoveCostProp);
 
         EditorGUILayout.Space();
 
@@ -153,11 +158,18 @@ public class AStarMapEditor : Editor
             targetMap.BuildMap();
 
             EditorUtility.SetDirty(targetMap);
+
+            m_PrevTileMap = targetMap.MapData;
         }
 
-        if (targetMap.Size > 0)
+        if (targetMap.Size <= 0)
         {
-            EditorGUILayout.HelpBox("Map Data has been built!", MessageType.Info);
+            EditorGUILayout.HelpBox("Map Data has not been built!", MessageType.Warning);
+        }
+
+        if (m_PrevTileMap != targetMap.MapData)
+        {
+            EditorGUILayout.HelpBox("Map Data has not been rebuilt with the new Map Data!", MessageType.Warning);
         }
 
         serializedObject.ApplyModifiedProperties();

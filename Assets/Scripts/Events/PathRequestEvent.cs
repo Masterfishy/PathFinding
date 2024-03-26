@@ -16,9 +16,6 @@ public class PathRequestEvent : ScriptableObject
     /// <param name="payload">The request payload</param>
     public void RaiseEvent(PathRequest payload)
     {
-        if (OnEventRaised != null)
-        {
-            OnEventRaised.Invoke(payload);
-        }
+        OnEventRaised?.Invoke(payload);
     }
 }

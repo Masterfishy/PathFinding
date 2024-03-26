@@ -8,14 +8,15 @@ using UnityEngine.Events;
 [CreateAssetMenu(menuName ="Input Reader")]
 public class InputReader : ScriptableObject, GameInput.IPlayActions
 {
-    public UnityEvent<InputAction.CallbackContext> PressEventW;
-    public UnityEvent<InputAction.CallbackContext> PressEventA;
-    public UnityEvent<InputAction.CallbackContext> PressEventS;
-    public UnityEvent<InputAction.CallbackContext> PressEventD;
-    public UnityEvent<InputAction.CallbackContext> PressEventUp;
-    public UnityEvent<InputAction.CallbackContext> PressEventDown;
-    public UnityEvent<InputAction.CallbackContext> PressEventLeft;
-    public UnityEvent<InputAction.CallbackContext> PressEventRight;
+    public UnityEvent<InputAction.CallbackContext> InputEventW;
+    public UnityEvent<InputAction.CallbackContext> InputEventA;
+    public UnityEvent<InputAction.CallbackContext> InputEventS;
+    public UnityEvent<InputAction.CallbackContext> InputEventD;
+    public UnityEvent<InputAction.CallbackContext> InputEventUp;
+    public UnityEvent<InputAction.CallbackContext> InputEventDown;
+    public UnityEvent<InputAction.CallbackContext> InputEventLeft;
+    public UnityEvent<InputAction.CallbackContext> InputEventRight;
+    public UnityEvent<InputAction.CallbackContext> InputEventLeftClick;
 
     private GameInput gameInput;
 
@@ -37,65 +38,78 @@ public class InputReader : ScriptableObject, GameInput.IPlayActions
 
     public void OnW(InputAction.CallbackContext context)
     {
-        if (PressEventW != null && (context.performed || context.canceled))
+        if (context.performed || context.canceled)
         {
-            PressEventW.Invoke(context);
+            InputEventW?.Invoke(context);
         }
     }
 
     public void OnA(InputAction.CallbackContext context)
     {
-        if (PressEventA != null && (context.performed || context.canceled))
+        if (context.performed || context.canceled)
         {
-            PressEventA.Invoke(context);
+            InputEventA?.Invoke(context);
         }
     }
 
     public void OnS(InputAction.CallbackContext context)
     {
-        if (PressEventS != null && (context.performed || context.canceled))
+        if (context.performed || context.canceled)
         {
-            PressEventS.Invoke(context);
+            InputEventS?.Invoke(context);
         }
     }
 
     public void OnD(InputAction.CallbackContext context)
     {
-        if (PressEventD != null && (context.performed || context.canceled))
+        if (context.performed || context.canceled)
         {
-            PressEventD.Invoke(context);
+            InputEventD?.Invoke(context);
         }
     }
 
     public void OnUp(InputAction.CallbackContext context)
     {
-        if (PressEventUp != null && (context.performed || context.canceled))
+        if (context.performed || context.canceled)
         {
-            PressEventUp.Invoke(context);
+            InputEventUp?.Invoke(context);
         }
     }
 
     public void OnLeft(InputAction.CallbackContext context)
     {
-        if (PressEventLeft != null && (context.performed || context.canceled))
+        if (context.performed || context.canceled)
         {
-            PressEventLeft.Invoke(context);
+            InputEventLeft?.Invoke(context);
         }
     }
 
     public void OnDown(InputAction.CallbackContext context)
     {
-        if (PressEventDown != null && (context.performed || context.canceled))
+        if (context.performed || context.canceled)
         {
-            PressEventDown.Invoke(context);
+            InputEventDown?.Invoke(context);
         }
     }
 
     public void OnRight(InputAction.CallbackContext context)
     {
-        if (PressEventRight != null && (context.performed || context.canceled))
+        if (context.performed || context.canceled)
         {
-            PressEventRight.Invoke(context);
+            InputEventRight?.Invoke(context);
         }
+    }
+
+    public void OnLeftClick(InputAction.CallbackContext context)
+    {
+        if (context.performed || context.canceled)
+        {
+            InputEventLeftClick.Invoke(context);
+        }
+    }
+
+    public void OnPosition(InputAction.CallbackContext context)
+    {
+        // Nothing to do
     }
 }

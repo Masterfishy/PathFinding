@@ -7,12 +7,20 @@ using UnityEngine;
 /// </summary>
 public class PathResponse
 {
-    public int Source;
-    public List<Vector3> Path;
-    public bool PathSuccess;
+    public int Id { get; private set; }
+    public List<Vector3> Path {  get; private set; }
+    public bool PathSuccess { get; private set; }
 
     /// <summary>
-    /// A delegate callback that returns a discovered path and a bool to indicate the success of the request.
+    /// Create a path response
     /// </summary>
-    public Action<List<Vector3>, bool> OnPathComplete;
+    /// <param name="id">The identifier for the response to be associated with a request</param>
+    /// <param name="path">The path requested</param>
+    /// <param name="pathSuccess">True if a path was found; false otherwise</param>
+    public PathResponse(int id, List<Vector3> path, bool pathSuccess)
+    {
+        Id = id;
+        Path = path;
+        PathSuccess = pathSuccess;
+    }
 }

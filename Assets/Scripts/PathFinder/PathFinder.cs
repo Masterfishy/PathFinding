@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 
 /// <summary>
@@ -15,8 +15,7 @@ public class PathFinder : MonoBehaviour
 
     public PathRequestEvent PathRequestEvent;
 
-    private SourceEvictingTaskQueue<int, PathRequest> m_TaskQueue;
-    private Dictionary<int, Coroutine> m_RunningTasks;
+    private Dictionary<int, RunningRequest> m_Requests;
 
     /// <summary>
     /// Request a path from the start position to the end position
@@ -24,35 +23,47 @@ public class PathFinder : MonoBehaviour
     /// <param name="request">The path request</param>
     public void RequestPath(PathRequest request)
     {
-        Debug.Log($"Requesting Path: {request}");
-        // Add it to the queue
-        m_TaskQueue.Enqueue(request.Source, request);
+        // Check if we have a running request for the request's id
+        if (m_Requests.TryGetValue(request.Id, out RunningRequest runningRequest))
+        {
+            // TODO check timestamp for request limiting
+
+            // If we do, stop it
+            if (runningRequest.Routine != null)
+            {
+                StopCoroutine(runningRequest.Routine);
+            }
+        }
+
+        // Create a running request for the request
+        RunningRequest newRequest = new(request);
+
+        // Start the coroutine
+        newRequest.Start(StartCoroutine(SearchAlgorithm.Contents.FindPath(request, OnFinishedProcessingRequest)));
+
+        m_Requests[request.Id] = newRequest;
     }
 
     /// <summary>
     /// Callback function triggered when a path request task is processed
     /// </summary>
     /// <param name="pathResponse">A path result from a search algorithm</param>
-    public void OnFinishedProcessingRequest(PathResponse pathResponse)
+    public void OnFinishedProcessingRequest(PathResponse response)
     {
-        Debug.Log($"Path Finder callback! {pathResponse}");
-        if (pathResponse == null)
+        // Check if we have a running request for the response's id
+        if (m_Requests.TryGetValue(response.Id, out RunningRequest request))
         {
-            return;
+            // Remove the running request
+            m_Requests.Remove(request.Id);
+
+            // Call the requests callback with the response
+            request.End(response);
         }
-
-        // Trigger the callback of the path request
-        pathResponse.OnPathComplete(pathResponse.Path, pathResponse.PathSuccess);
-
-        // Stop and remove the request from the running tasks
-        StopTask(completedRequest.Source);
-        m_RunningTasks.Remove(completedRequest.Source);
     }
 
     private void OnEnable()
     {
-        m_TaskQueue = new();
-        m_RunningTasks = new();
+        m_Requests = new();
 
         PathRequestEvent.OnEventRaised += RequestPath;
     }
@@ -61,42 +72,47 @@ public class PathFinder : MonoBehaviour
     {
         PathRequestEvent.OnEventRaised -= RequestPath;
 
-        // Stop all the requests
-        foreach(Coroutine task in m_RunningTasks.Values)
-        {
-            StopCoroutine(task);
-        }
-    }
-
-    private void Update()
-    {
-        if (!m_TaskQueue.IsEmpty() && SearchAlgorithm != null)
-        {
-            // Dequeue
-            PathRequest nextRequest = m_TaskQueue.Dequeue();
-            Debug.Log($"Processing the request: {nextRequest}");
-
-            // Stop any old tasks for this source
-            StopTask(nextRequest.Source);
-            m_RunningTasks.Remove(nextRequest.Source);
-
-            // Process the request
-            m_RunningTasks[nextRequest.Source] = StartCoroutine(SearchAlgorithm.Contents.FindPath(nextRequest, OnFinishedProcessingRequest));
-        }
     }
 
     /// <summary>
-    /// Tries to stop a given task if it is in the m_RunningTasks
+    /// An internal class for tracking running requests
     /// </summary>
-    /// <param name="source">The source to stop</param>
-    private void StopTask(int source)
+    private class RunningRequest
     {
-        if (m_RunningTasks.TryGetValue(source, out Coroutine oldTask))
-        {
-            if (oldTask == null)
-                return;
+        public int Id { get; private set; }
+        public Coroutine Routine { get; private set; }
+        public double Timestamp { get; private set; }
 
-            StopCoroutine(oldTask);
+        private readonly PathRequest m_Request;
+
+        /// <summary>
+        /// Create an unstarted RunningRequest
+        /// </summary>
+        /// <param name="id">The unique identifier for the request</param>
+        /// <param name="request">The path request that is running</param>
+        public RunningRequest(PathRequest request)
+        {
+            Id = request.Id;
+            m_Request = request;
+        }
+
+        /// <summary>
+        /// Store the started coroutine and mark the time
+        /// </summary>
+        /// <param name="coroutine">The coroutine this request tracks</param>
+        public void Start(Coroutine coroutine)
+        {
+            Routine = coroutine;
+            Timestamp = Time.realtimeSinceStartupAsDouble;
+        }
+
+        /// <summary>
+        /// Trigger the request's callback
+        /// </summary>
+        /// <param name="response">The response for the request</param>
+        public void End(PathResponse response)
+        {
+            m_Request.OnPathComplete(response);
         }
     }
 }

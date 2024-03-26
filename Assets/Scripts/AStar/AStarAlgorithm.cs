@@ -13,6 +13,8 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
 {
     public AStarMap AStarMap;
 
+    public float SearchRate;
+
     [Header("Debug")]
     public Color DebugPathColor;
     public Tilemap DebugTilemap;
@@ -22,14 +24,14 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
     /// <summary>
     /// A coroutine to find a path using the A* algorithm from start position to end position
     /// </summary>
-    public IEnumerator FindPath(PathRequest pathRequest, Action<PathRequest> callback)
+    public IEnumerator FindPath(PathRequest pathRequest, Action<PathResponse> callback)
     {
         List<Vector3> path = new();
         bool pathSuccess = false;
 
         // Get the map's position for start and end
-        AStarPosition startPos = AStarMap.GetPosition(Vector3Int.FloorToInt(pathRequest.PathStart));
-        AStarPosition endPos = AStarMap.GetPosition(Vector3Int.FloorToInt(pathRequest.PathEnd));
+        AStarPosition startPos = AStarMap.ToAStarPosition(Vector3Int.FloorToInt(pathRequest.PathStart));
+        AStarPosition endPos = AStarMap.ToAStarPosition(Vector3Int.FloorToInt(pathRequest.PathEnd));
 
         // If either positions does not exist in the map, end the search
         if (startPos == null || endPos == null)
@@ -52,7 +54,7 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
             AStarPosition currentNode = openSet.Pop();
             closedSet.Add(currentNode);
 
-            DebugPosition(Vector3Int.FloorToInt(currentNode.Position));
+            //DebugPosition(Vector3Int.FloorToInt(currentNode.Position));
 
             // If we reach our target
             if (currentNode.Equals(endPos))
@@ -66,9 +68,9 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
             foreach(Vector3 neighborPos in neighbors)
             {
                 // Get the AStarPosition from the neighbor positions
-                AStarPosition neighbor = AStarMap.GetPosition(Vector3Int.FloorToInt(neighborPos));
+                AStarPosition neighbor = AStarMap.ToAStarPosition(neighborPos);
 
-                Debug.Log($"Neighbor: {neighbor.Position}, Cost: {neighbor.Cost}");
+                //Debug.Log($"Neighbor: {neighbor.Position}, Cost: {neighbor.Cost}");
                 if (closedSet.Contains(neighbor))
                 {
                     // If we have visited this node, continue
@@ -86,17 +88,17 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
                     if (!openSet.Contains(neighbor))
                     {
                         openSet.Push(neighbor);
-                        Debug.Log($"Add to openset with {neighbor.Position}");
+                        //Debug.Log($"Add to openset with {neighbor.Position}");
                     }
                     else
                     {
                         openSet.UpdateItem(neighbor);
-                        Debug.Log($"Update openset with {neighbor.Position}");
+                        //Debug.Log($"Update openset with {neighbor.Position}");
                     }
                 }
             }
 
-            yield return new WaitForEndOfFrame();
+            yield return null;
         }
 
         if (pathSuccess)
@@ -104,7 +106,7 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
             path = RetracePath(startPos, endPos);
         }
 
-        Debug.Log($"AStar found a way {pathSuccess}");
+        //Debug.Log($"AStar found a way {pathSuccess}");
         CompleteRequest(pathRequest, callback, path, pathSuccess);
     }
 
@@ -151,9 +153,9 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
         DebugTilemap.SetTile(pos, DebugTileBase);
     }
 
-    private void CompleteRequest(PathRequest request, Action<PathRequest> callback, List<Vector3> path, bool success)
+    private void CompleteRequest(PathRequest request, Action<PathResponse> callback, List<Vector3> path, bool success)
     {
-        request.SetPath(path, success);
-        callback(request);
+        PathResponse response = new(request.Id, path, success);
+        callback(response);
     }
 }

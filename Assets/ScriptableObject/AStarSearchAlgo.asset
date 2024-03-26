@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: AStarSearchAlgo
   m_EditorClassIdentifier: 
   AStarMap: {fileID: 11400000, guid: 0590ae145db516d44b1f321ee3ad8b35, type: 2}
+  SearchRate: 0
   DebugPathColor: {r: 0, g: 0, b: 0, a: 1}
   DebugTilemap: {fileID: 0}
-  DebugTileBase: {fileID: 0}
+  DebugTileBase: {fileID: 11400000, guid: a0904b9786af31e4384f20fd97acfb7d, type: 2}
   DoDebug: 0

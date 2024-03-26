@@ -4,7 +4,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEditor.ShaderKeywordFilter;
 using UnityEngine;
 
-public class AStarPosition : ISearchablePosition, IHeapItem<AStarPosition>
+public class AStarPosition : IHeapItem<AStarPosition>
 {
     public AStarPosition Parent;
 

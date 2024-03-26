@@ -85,13 +85,24 @@ public class EntityController : MonoBehaviour // IInputListener
         }
     }
 
-    public void OnPathFound(List<Vector3> path, bool pathSuccess)
+    public void OnLeftClickAction(InputAction.CallbackContext context)
     {
-        Debug.Log($"Path Received! {pathSuccess}");
-        if (pathSuccess)
+        if (context.performed)
         {
-            Debug.Log($"Path length: {path.Count}");
-            mDebugPath = path;
+            Vector3 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
+            mousePos.z = 0;
+
+            RequestPath(transform.position, mousePos);
+        }
+    }
+
+    public void OnPathFound(PathResponse response)
+    {
+        Debug.Log($"Path Received! {response.PathSuccess}");
+        if (response.PathSuccess)
+        {
+            Debug.Log($"Path length: {response.Path.Count}");
+            mDebugPath = response.Path;
         }
 
         m_IsRequesting = false;
@@ -155,6 +166,9 @@ public class EntityController : MonoBehaviour // IInputListener
         if (Target == null)
             return false;
 
+        if (mDebugPath.Count <= 0)
+            return true;
+
         float targetDistanceFromLastPathPoint = Vector3Int.Distance(Vector3Int.FloorToInt(Target.position), 
                                                                     Vector3Int.FloorToInt(mDebugPath[^1]));
         return m_IsRequesting && targetDistanceFromLastPathPoint > RerequestDistance;
@@ -170,6 +184,8 @@ public class EntityController : MonoBehaviour // IInputListener
         RegisterActionCallback(NegativeXAction, OnNegativeXAction);
         RegisterActionCallback(PositiveYAction, OnPositiveYAction);
         RegisterActionCallback(NegativeYAction, OnNegativeYAction);
+
+        InputReader.InputEventLeftClick.AddListener(OnLeftClickAction);
     }
 
     private void OnDisable()
@@ -178,6 +194,8 @@ public class EntityController : MonoBehaviour // IInputListener
         UnregisterActionCallback(NegativeXAction, OnNegativeXAction);
         UnregisterActionCallback(PositiveYAction, OnPositiveYAction);
         UnregisterActionCallback(NegativeYAction, OnNegativeYAction);
+
+        InputReader.InputEventLeftClick.RemoveListener(OnLeftClickAction);
     }
 
     private void Update()
@@ -185,11 +203,11 @@ public class EntityController : MonoBehaviour // IInputListener
         //Debug.Log(mVelocity);
         transform.position += Speed * Time.deltaTime * mVelocity.normalized;
 
-        if (CheckRequestConditions())
-        {
-            RequestPath(transform.position, Target.position);
-            m_IsRequesting = true;
-        }
+        //if (CheckRequestConditions())
+        //{
+        //    RequestPath(transform.position, Target.position);
+        //    m_IsRequesting = true;
+        //}
     }
 
     private void OnDrawGizmos()
