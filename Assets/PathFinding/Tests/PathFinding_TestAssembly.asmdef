@@ -1,12 +1,13 @@
 {
-    "name": "Scripts",
+    "name": "PathFinding_TestAssembly",
     "rootNamespace": "",
     "references": [
-        "GUID:75469ad4d38634e559750d17036d5f7c",
-        "GUID:738e2ff2fbe07ab4eb8aab5bcbcf8060"
+        "GUID:f6247585808241c44903cacb711af8d6"
     ],
     "includePlatforms": [],
-    "excludePlatforms": [],
+    "excludePlatforms": [
+        "Editor"
+    ],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
