@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -13,13 +14,12 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
 {
     public AStarMap AStarMap;
 
-    public float SearchRate;
 
-    [Header("Debug")]
-    public Color DebugPathColor;
-    public Tilemap DebugTilemap;
-    public TileBase DebugTileBase;
-    public bool DoDebug;
+    //[Header("Debug")]
+    //public Color DebugPathColor;
+    //public Tilemap DebugTilemap;
+    //public TileBase DebugTileBase;
+    //public bool DoDebug;
 
     /// <summary>
     /// A coroutine to find a path using the A* algorithm from start position to end position
@@ -29,22 +29,28 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
         List<Vector3> path = new();
         bool pathSuccess = false;
 
-        // Get the map's position for start and end
-        AStarPosition startPos = AStarMap.ToAStarPosition(Vector3Int.FloorToInt(pathRequest.PathStart));
-        AStarPosition endPos = AStarMap.ToAStarPosition(Vector3Int.FloorToInt(pathRequest.PathEnd));
-
         // If either positions does not exist in the map, end the search
-        if (startPos == null || endPos == null)
+        if (!IsRequestValid(pathRequest))
         {
             CompleteRequest(pathRequest, callback, path, pathSuccess);
             yield break;
         }
 
+        // Create the request positions based on the map
+        AStarPosition startPos = new(AStarMap.ToMapPosition(pathRequest.PathStart));
+        AStarPosition endPos = new(AStarMap.ToMapPosition(pathRequest.PathEnd));
+
+        // The pool of all AStarPositions explored
+        Dictionary<Vector3, AStarPosition> positionPool = new();
+        
         // The openSet stores all discovered nodes with the cheapest one at the top
         MinHeap<AStarPosition> openSet = new(AStarMap.Size * 10);
 
         // The closedSet stores all the nodes we have visited
         HashSet<AStarPosition> closedSet = new();
+
+        positionPool.Add(startPos.Position, startPos);
+        positionPool.Add(endPos.Position, endPos);
 
         openSet.Push(startPos);
 
@@ -67,8 +73,12 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
             List<Vector3> neighbors = AStarMap.GetNeighbors(currentNode.Position);
             foreach(Vector3 neighborPos in neighbors)
             {
-                // Get the AStarPosition from the neighbor positions
-                AStarPosition neighbor = AStarMap.ToAStarPosition(neighborPos);
+                // Get the AStarPosition for the neighbor's position
+                if (!positionPool.TryGetValue(neighborPos, out AStarPosition neighbor))
+                {
+                    neighbor = new AStarPosition(neighborPos);
+                    positionPool.Add(neighborPos, neighbor);
+                }
 
                 //Debug.Log($"Neighbor: {neighbor.Position}, Cost: {neighbor.Cost}");
                 if (closedSet.Contains(neighbor))
@@ -78,6 +88,7 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
                 }
 
                 int neighborCost = currentNode.GCost + AStarMap.GetTravelCost(currentNode.Position, neighbor.Position);
+                // If it's cheaper to travel to this neighbor from the current node or we haven't been to this nieghbor
                 if (neighborCost < neighbor.GCost || !openSet.Contains(neighbor))
                 {
                     // Update the neighbor's cost
@@ -98,8 +109,10 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
                 }
             }
 
-            yield return null;
+            yield return new WaitForEndOfFrame();
         }
+
+        Debug.Log($"Open set count: {openSet.Count}");
 
         if (pathSuccess)
         {
@@ -142,20 +155,31 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
     /// Place a debug tile on the given position
     /// </summary>
     /// <param name="pos">The searched position</param>
-    private void DebugPosition(Vector3Int pos)
-    {
-        Debug.Log($"Explored pos {pos}");
-        if (!DoDebug || DebugTilemap == null || DebugTileBase == null)
-        {
-            return;
-        }
+    //private void DebugPosition(Vector3Int pos)
+    //{
+    //    Debug.Log($"Explored pos {pos}");
+    //    if (!DoDebug || DebugTilemap == null || DebugTileBase == null)
+    //    {
+    //        return;
+    //    }
 
-        DebugTilemap.SetTile(pos, DebugTileBase);
-    }
+    //    DebugTilemap.SetTile(pos, DebugTileBase);
+    //}
 
     private void CompleteRequest(PathRequest request, Action<PathResponse> callback, List<Vector3> path, bool success)
     {
-        PathResponse response = new(request.Id, path, success);
+        PathResponse response = new(request, path, success);
         callback(response);
+    }
+
+    /// <summary>
+    /// Check if the start and end positions are in the map and different
+    /// </summary>
+    /// <param name="request">The path request</param>
+    /// <returns>True if the start and end positions are in the map; false otherwise</returns>
+    private bool IsRequestValid(PathRequest request)
+    {
+        return AStarMap.ToMapPosition(request.PathStart) != AStarMap.ToMapPosition(request.PathEnd) && 
+               AStarMap.HasPosition(request.PathStart) && AStarMap.HasPosition(request.PathEnd);
     }
 }

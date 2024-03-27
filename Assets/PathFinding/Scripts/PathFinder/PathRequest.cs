@@ -10,6 +10,7 @@ public class PathRequest
     public int Id { get; private set; }
     public Vector3 PathStart { get; private set; }
     public Vector3 PathEnd { get; private set; }
+    public IPathRequester Requester { get; private set; }
 
     /// <summary>
     /// A delegate callback that returns a discovered path and a bool to indicate the success of the request.
@@ -22,11 +23,12 @@ public class PathRequest
     /// <param name="pathStart">The starting position of the path</param>
     /// <param name="pathEnd">The ending position of the path</param>
     /// <param name="onPathComplete">The callback to trigger to return the discovered path</param>
-    public PathRequest(int id, Vector3 pathStart, Vector3 pathEnd, Action<PathResponse> onPathComplete)
+    public PathRequest(IPathRequester requester, Vector3 pathStart, Vector3 pathEnd)
     {
-        Id = id;
+        //Id = id;
         PathStart = pathStart;
         PathEnd = pathEnd;
-        OnPathComplete = onPathComplete;
+        //OnPathComplete = onPathComplete;
+        Requester = requester;
     }
 }

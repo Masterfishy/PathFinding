@@ -10,16 +10,18 @@ public class PathResponse
     public int Id { get; private set; }
     public List<Vector3> Path {  get; private set; }
     public bool PathSuccess { get; private set; }
+    public IPathRequester Requester { get; private set; }
 
     /// <summary>
     /// Create a path response
     /// </summary>
-    /// <param name="id">The identifier for the response to be associated with a request</param>
+    /// <param name="request">The request this response is for</param>
     /// <param name="path">The path requested</param>
     /// <param name="pathSuccess">True if a path was found; false otherwise</param>
-    public PathResponse(int id, List<Vector3> path, bool pathSuccess)
+    public PathResponse(PathRequest request, List<Vector3> path, bool pathSuccess)
     {
-        Id = id;
+        //Id = id;
+        Requester = request.Requester;
         Path = path;
         PathSuccess = pathSuccess;
     }

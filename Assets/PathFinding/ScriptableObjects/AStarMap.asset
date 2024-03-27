@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b2cc9b68deaaf34888b3f5cdea79c6f, type: 3}
   m_Name: AStarMap
   m_EditorClassIdentifier: 
-  MapData: {fileID: 0}
+  MapData: {fileID: 4850761964778184582, guid: b79038b057badd04fa548b978ce0d177, type: 3}
   DiagonalMoveCost: 14
   AdjacentMoveCost: 10

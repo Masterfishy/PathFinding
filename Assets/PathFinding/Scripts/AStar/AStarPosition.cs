@@ -26,14 +26,14 @@ public class AStarPosition : IHeapItem<AStarPosition>
     private int mHeapIndex;
     public int HeapIndex { get => mHeapIndex; set => mHeapIndex = value; }
 
-    private Vector3Int mPosition;
+    private Vector3 mPosition;
     public Vector3 Position => mPosition;
 
     /// <summary>
     /// Create an A* position with the given coordinates
     /// </summary>
     /// <param name="position">The position the A* position represents</param>
-    public AStarPosition(Vector3Int position)
+    public AStarPosition(Vector3 position)
     {
         GCost = 0;
         HCost = 0;
@@ -45,7 +45,7 @@ public class AStarPosition : IHeapItem<AStarPosition>
     /// <summary>
     /// Create an A* position with a default position of <c>Vector3Int.zero</c>
     /// </summary>
-    public AStarPosition() : this(Vector3Int.zero) { }
+    public AStarPosition() : this(Vector3.zero) { }
 
     /// <summary>
     /// Compare the costs between this Position and another. Compare the HCost if Cost is the same.
@@ -65,10 +65,10 @@ public class AStarPosition : IHeapItem<AStarPosition>
     }
 
     /// <summary>
-    /// Check if the positon in the AStarPosition is the same as another
+    /// Check if the positon the AStarPosition represents is the same as another
     /// </summary>
     /// <param name="other">The other AStartPosition</param>
-    /// <returns>True if the stored positions are the same</returns>
+    /// <returns>True if the represented positions are the same</returns>
     public bool Equals(AStarPosition other)
     {
         return other != null && Position.Equals(other.Position);

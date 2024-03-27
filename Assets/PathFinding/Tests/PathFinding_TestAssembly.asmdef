@@ -2,17 +2,23 @@
     "name": "PathFinding_TestAssembly",
     "rootNamespace": "",
     "references": [
-        "GUID:f6247585808241c44903cacb711af8d6"
+        "UnityEditor.TestRunner",
+        "UnityEngine.TestRunner",
+        "PathFinding_ScriptAssembly"
     ],
-    "includePlatforms": [],
-    "excludePlatforms": [
+    "includePlatforms": [
         "Editor"
     ],
+    "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
     "versionDefines": [],
     "noEngineReferences": false
 }

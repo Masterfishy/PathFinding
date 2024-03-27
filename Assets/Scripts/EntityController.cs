@@ -10,7 +10,7 @@ using System.Reflection;
 using UnityEditor;
 #endif
 
-public class EntityController : MonoBehaviour // IInputListener
+public class EntityController : MonoBehaviour, IPathRequester // IInputListener
 {
     public PathRequestEvent PathRequestEvent;
     public float RerequestDistance;
@@ -110,7 +110,7 @@ public class EntityController : MonoBehaviour // IInputListener
 
     private void RequestPath(Vector3 start, Vector3 end)
     {
-        PathRequest request = new(1, start, end, OnPathFound);
+        PathRequest request = new(this, start, end);
         PathRequestEvent.RaiseEvent(request);
     }
 
