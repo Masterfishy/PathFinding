@@ -1,5 +1,5 @@
 {
-    "name": "PathFinding_ScriptAssembly",
+    "name": "ContextSteering_ScriptAssembly",
     "rootNamespace": "",
     "references": [
         "GUID:0a402749de4bbce40945f439da9279bf"
