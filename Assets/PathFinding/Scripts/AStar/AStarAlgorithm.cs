@@ -14,12 +14,15 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
 {
     public AStarMap AStarMap;
 
-
-    //[Header("Debug")]
-    //public Color DebugPathColor;
-    //public Tilemap DebugTilemap;
-    //public TileBase DebugTileBase;
-    //public bool DoDebug;
+    /// <summary>
+    /// Offset to apply to the discovered path.
+    /// </summary>
+    /// <remarks>
+    /// This is helpful for when the world is using Vector2Int, 
+    /// but you want the point in the center of the tile not the corner.
+    /// Use PointOffset = Vector2(0.5f, 0.5f)
+    /// </remarks>
+    public Vector3 PointOffset;
 
     /// <summary>
     /// A coroutine to find a path using the A* algorithm from start position to end position
@@ -116,7 +119,7 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
 
         if (pathSuccess)
         {
-            path = RetracePath(startPos, endPos);
+            path = OptimizePath(RetracePath(startPos, endPos));
         }
 
         //Debug.Log($"AStar found a way {pathSuccess}");
@@ -140,7 +143,7 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
             currentPos.GCost = 0;
             currentPos.HCost = 0;
 
-            path.Add(currentPos.Position);
+            path.Add(currentPos.Position + PointOffset);
             currentPos = currentPos.Parent;
         }
 
@@ -151,20 +154,32 @@ public class AStarAlgorithm : ScriptableObject, ISearchAlgorithm
         return path;
     }
 
-    /// <summary>
-    /// Place a debug tile on the given position
-    /// </summary>
-    /// <param name="pos">The searched position</param>
-    //private void DebugPosition(Vector3Int pos)
-    //{
-    //    Debug.Log($"Explored pos {pos}");
-    //    if (!DoDebug || DebugTilemap == null || DebugTileBase == null)
-    //    {
-    //        return;
-    //    }
+    private List<Vector3> OptimizePath(List<Vector3> path)
+    {
+        List<Vector3> simplifiedPath = new();
+        float lastChangeX = 0;
+        float lastChangeY = 0;
 
-    //    DebugTilemap.SetTile(pos, DebugTileBase);
-    //}
+        for (int i = 0; i < path.Count - 1; i++)
+        {
+            float changeX = path[i].x - path[i + 1].x;
+            float changeY = path[i].y - path[i + 1].y;
+
+            if (changeX != lastChangeX || changeY != lastChangeY)
+            {
+                simplifiedPath.Add(path[i]);
+            }
+
+            // TODO handle sharp turns, smooth them out with more points
+
+            lastChangeX = changeX;
+            lastChangeY = changeY;
+        }
+
+        simplifiedPath.Add(path[^1]);
+
+        return simplifiedPath;
+    }
 
     private void CompleteRequest(PathRequest request, Action<PathResponse> callback, List<Vector3> path, bool success)
     {

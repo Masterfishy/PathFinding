@@ -4,11 +4,14 @@ using UnityEngine;
 
 public class ContextSteering : MonoBehaviour
 {
+    public int NumberOfRays = 8;
+    public bool Use2DPhysics = false;
+
+    [Header("Danger Settings")]
     public LayerMask DangerLayerMask;
     public float DangerRange;
     public float DangerWeight;
-
-    public int NumberOfRays = 8;
+    public AnimationCurve DangerCurve;
 
     [Header("Debug")]
     public bool DoDebug;
@@ -48,6 +51,16 @@ public class ContextSteering : MonoBehaviour
     private float[] m_DangerProjections;
 
     private Coroutine m_SteeringCoroutine;
+    private bool m_IsSteering;
+
+    /// <summary>
+    /// Check if the ContextSteering is actively running
+    /// </summary>
+    /// <returns>True if context steering is running; false otherwise</returns>
+    public bool IsSteeringActive()
+    {
+        return m_IsSteering;
+    }
 
     /// <summary>
     /// Start context steering towards the interestTarget
@@ -61,7 +74,10 @@ public class ContextSteering : MonoBehaviour
         m_InterestTarget = interestTarget;
         m_DirectionResult = directionResult;
 
+        StopSteering();
         m_SteeringCoroutine = StartCoroutine(Steering());
+
+        m_IsSteering = true;
     }
 
     /// <summary>
@@ -79,6 +95,8 @@ public class ContextSteering : MonoBehaviour
         {
             m_DirectionResult.Value = Vector3.zero;
         }
+
+        m_IsSteering = false;
     }
 
     /// <summary>
@@ -99,7 +117,6 @@ public class ContextSteering : MonoBehaviour
 
             yield return new WaitForFixedUpdate();
         }
-
     }
 
     /// <summary>
@@ -124,17 +141,32 @@ public class ContextSteering : MonoBehaviour
     /// </summary>
     private void DangerProjections()
     {
+
         for (int i = 0; i < NumberOfRays; ++i)
         {
+            float projection = 0;
+
             // Reset the danger
             m_DangerProjections[i] = 0f;
 
-            bool hit = Physics.Raycast(transform.position, m_DetectionDirections[i], out RaycastHit result, DangerRange, DangerLayerMask);
-            if (hit)
+            if (Use2DPhysics)
             {
-                float projection = 1 - (result.distance / DangerRange);
-                m_DangerProjections[i] = projection * DangerWeight;
+                RaycastHit2D result2D = Physics2D.Raycast(transform.position, m_DetectionDirections[i], DangerRange, DangerLayerMask);
+                if (result2D)
+                {
+                    projection = 1 - (result2D.distance / DangerRange);
+                }
             }
+            else
+            {
+                bool hit = Physics.Raycast(transform.position, m_DetectionDirections[i], out RaycastHit result, DangerRange, DangerLayerMask);
+                if (hit)
+                {
+                    projection = 1 - (result.distance / DangerRange);
+                }
+            }
+            
+            m_DangerProjections[i] = DangerCurve.Evaluate(projection) * DangerWeight;
         }
     }
 
@@ -173,9 +205,6 @@ public class ContextSteering : MonoBehaviour
         {
             Debug.DrawRay(transform.position, m_DirectionResult.Value, ResultColor);
         }
-
-        Gizmos.color = DangerColor;
-        Gizmos.DrawWireSphere(transform.position, DangerRange);
     }
 
     private void Start()
@@ -196,5 +225,13 @@ public class ContextSteering : MonoBehaviour
             float angle = i * 2 * Mathf.PI / NumberOfRays;
             m_DetectionDirections[i] = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle));
         }
+
+        m_IsSteering = false;
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = DangerColor;
+        Gizmos.DrawWireSphere(transform.position, DangerRange);
     }
 }

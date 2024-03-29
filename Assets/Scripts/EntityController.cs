@@ -4,8 +4,6 @@ using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using System.Reflection;
 
-
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -13,77 +11,21 @@ using UnityEditor;
 public class EntityController : MonoBehaviour, IPathRequester // IInputListener
 {
     public PathRequestEvent PathRequestEvent;
-    public float RerequestDistance;
-    public Transform Target;
+    public float PointArrivalDistance;
 
     public float Speed;
 
     [Header("Input Settings")]
     public InputReader InputReader;
-    public string PositiveXAction;
-    public string NegativeXAction;
-    public string PositiveYAction;
-    public string NegativeYAction;
 
     [Header("Debug")]
     public Color DebugPathColor;
-    private List<Vector3> mDebugPath;
 
-    private Vector3 mVelocity;
+    private int m_CurrentPathPointIndex;
+    private List<Vector3> m_Path;
 
-    private bool m_IsRequesting;
-
-    public void OnPositiveXAction(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            mVelocity.x = 1;
-        }
-
-        if (context.canceled)
-        {
-            mVelocity.x = 0;
-        }
-    }
-
-    public void OnNegativeXAction(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            mVelocity.x = -1;
-        }
-
-        if (context.canceled)
-        {
-            mVelocity.x = 0;
-        }
-    }
-
-    public void OnPositiveYAction(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            mVelocity.y = 1;
-        }
-
-        if (context.canceled)
-        {
-            mVelocity.y = 0;
-        }
-    }
-
-    public void OnNegativeYAction(InputAction.CallbackContext context)
-    {
-        if (context.performed)
-        {
-            mVelocity.y = -1;
-        }
-
-        if (context.canceled)
-        {
-            mVelocity.y = 0;
-        }
-    }
+    private ContextSteering m_ContextSteering;
+    private Vector3Variable m_MoveDirection;
 
     public void OnLeftClickAction(InputAction.CallbackContext context)
     {
@@ -102,16 +44,71 @@ public class EntityController : MonoBehaviour, IPathRequester // IInputListener
         if (response.PathSuccess)
         {
             Debug.Log($"Path length: {response.Path.Count}");
-            mDebugPath = response.Path;
+            m_Path = response.Path;
         }
 
-        m_IsRequesting = false;
+        OnFollowNewPath();
+    }
+
+    public void OnFollowNewPath()
+    {
+        if (m_Path == null || m_Path.Count <= 0)
+        {
+            OnFinishedFollowing();
+            return;
+        }
+
+        m_CurrentPathPointIndex = 0;
+
+        OnFollowNextPoint();
+    }
+
+    public void OnFollowNextPoint()
+    {
+        if (m_ContextSteering == null || m_MoveDirection == null)
+        {
+            return;
+        }
+
+        m_CurrentPathPointIndex++;
+
+        if (m_CurrentPathPointIndex >= m_Path.Count)
+        {
+            OnFinishedFollowing();
+            return;
+        }
+
+        m_ContextSteering.StartSteering(m_Path[m_CurrentPathPointIndex], m_MoveDirection);
+    }
+
+    public void OnFinishedFollowing()
+    {
+        if (m_ContextSteering != null && m_ContextSteering.IsSteeringActive())
+        {
+            m_ContextSteering.StopSteering();
+        }
     }
 
     private void RequestPath(Vector3 start, Vector3 end)
     {
         PathRequest request = new(this, start, end);
         PathRequestEvent.RaiseEvent(request);
+    }
+
+    private void FollowPath()
+    {
+        if (m_Path == null || m_Path.Count <= 0 ||
+            m_ContextSteering == null || !m_ContextSteering.IsSteeringActive())
+        {
+            return;
+        }
+
+        // If we reach the current point
+        float distanceToPoint = Vector3.Distance(transform.position, m_Path[m_CurrentPathPointIndex]);
+        if (distanceToPoint < PointArrivalDistance)
+        {
+            OnFollowNextPoint();
+        }
     }
 
     /// <summary>
@@ -157,88 +154,50 @@ public class EntityController : MonoBehaviour, IPathRequester // IInputListener
         }
     }
 
-    /// <summary>
-    /// Check if the conditions for requesting a path are met
-    /// </summary>
-    /// <returns>True if conditions are met; false otherwise</returns>
-    private bool CheckRequestConditions()
+    private void Start()
     {
-        if (Target == null)
-            return false;
+        m_MoveDirection = ScriptableObject.CreateInstance<Vector3Variable>();
 
-        if (mDebugPath.Count <= 0)
-            return true;
-
-        float targetDistanceFromLastPathPoint = Vector3Int.Distance(Vector3Int.FloorToInt(Target.position), 
-                                                                    Vector3Int.FloorToInt(mDebugPath[^1]));
-        return m_IsRequesting && targetDistanceFromLastPathPoint > RerequestDistance;
+        TryGetComponent(out m_ContextSteering);
     }
 
     private void OnEnable()
     {
-        mDebugPath = new();
-        mVelocity = Vector3.zero;
-        m_IsRequesting = false;
-
-        RegisterActionCallback(PositiveXAction, OnPositiveXAction);
-        RegisterActionCallback(NegativeXAction, OnNegativeXAction);
-        RegisterActionCallback(PositiveYAction, OnPositiveYAction);
-        RegisterActionCallback(NegativeYAction, OnNegativeYAction);
+        m_Path = new();
+        m_CurrentPathPointIndex = -1;
 
         InputReader.InputEventLeftClick.AddListener(OnLeftClickAction);
     }
 
     private void OnDisable()
     {
-        UnregisterActionCallback(PositiveXAction, OnPositiveXAction);
-        UnregisterActionCallback(NegativeXAction, OnNegativeXAction);
-        UnregisterActionCallback(PositiveYAction, OnPositiveYAction);
-        UnregisterActionCallback(NegativeYAction, OnNegativeYAction);
-
         InputReader.InputEventLeftClick.RemoveListener(OnLeftClickAction);
+
+        OnFinishedFollowing();
     }
 
     private void Update()
     {
-        //Debug.Log(mVelocity);
-        transform.position += Speed * Time.deltaTime * mVelocity.normalized;
+        transform.position += Speed * Time.deltaTime * m_MoveDirection.Value;
 
-        //if (CheckRequestConditions())
-        //{
-        //    RequestPath(transform.position, Target.position);
-        //    m_IsRequesting = true;
-        //}
+        FollowPath();
     }
 
     private void OnDrawGizmos()
     {
-        if (mDebugPath != null && mDebugPath.Count != 0)
+        if (m_Path != null && m_Path.Count != 0)
         {
             // Draw the path
-            for (int i = 1; i < mDebugPath.Count; i++)
+            for (int i = 1; i < m_Path.Count; i++)
             {
-                Vector3 point = mDebugPath[i];
-                point.x += 0.5f;
-                point.y += 0.5f;
-
-                Vector3 nextPoint = mDebugPath[i - 1];
-                nextPoint.x += 0.5f;
-                nextPoint.y += 0.5f;
+                Vector3 point = m_Path[i];
+                Vector3 nextPoint = m_Path[i - 1];
 
                 Gizmos.color = DebugPathColor;
-                Gizmos.DrawWireSphere(point, 0.05f);
+                Gizmos.DrawWireSphere(point, PointArrivalDistance);
                 Gizmos.DrawLine(nextPoint, point);
             }
-
-            // Draw rerequest distance
-            Gizmos.color = DebugPathColor;
-            Vector3 spot = mDebugPath[^1];
-            spot.x += 0.5f;
-            spot.y += 0.5f;
-
-            Gizmos.DrawWireSphere(spot, RerequestDistance);
         }
-
     }
 }
 
