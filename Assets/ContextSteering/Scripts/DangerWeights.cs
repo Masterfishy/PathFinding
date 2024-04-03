@@ -53,15 +53,11 @@ public class DangerWeightsEditor : Editor
     private readonly int m_MaxLayers = 32;
     private string[] m_Layers = new string[32];
 
-    private List<DangerWeightEntry> m_EditingEntries;
-
-    private float m_InspectorWidth;
+    private List<DangerWeightEntry> m_TempEntries;
+    private bool m_HaveChangesBeenApplied;
 
     public void OnEnable()
     {
-        DangerWeights dangerWeights = target as DangerWeights;
-        dangerWeights.DangerLayerWeights ??= new();
-
         // Add only non empty strings to the layers
         int stringIndex = 0;
         for (int i = 0; i < m_MaxLayers; i++)
@@ -76,79 +72,78 @@ public class DangerWeightsEditor : Editor
         Array.Resize(ref m_Layers, stringIndex);
 
         // Copy the entries for editing
-        m_EditingEntries = new();
-        foreach (DangerWeightEntry entry in dangerWeights.DangerLayerWeights)
+        DangerWeights dangerWeights = target as DangerWeights;
+        m_TempEntries = new();
+
+        if (dangerWeights.DangerLayerWeights != null && dangerWeights.DangerLayerWeights.Count > 0)
         {
-            m_EditingEntries.Add(entry);
+            m_TempEntries.AddRange(dangerWeights.DangerLayerWeights);
         }
+
+        Debug.Log("Ehem, enable");
+
+        m_HaveChangesBeenApplied = true;
     }
 
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
 
-        DangerWeights dangerWeights = target as DangerWeights;
-
         EditorGUILayout.BeginHorizontal();
-
         if (GUILayout.Button("Add Entry"))
         {
-            DangerWeightEntry newEntry = new(0, 0f);
-            m_EditingEntries.Add(newEntry);
+            DangerWeightEntry newEntry = new(0, 0);
+            m_TempEntries.Add(newEntry);
+
+            m_HaveChangesBeenApplied = false;
         }
 
         EditorGUILayout.LabelField("Danger Layer Weights");
-
-        EditorGUILayout.LabelField(m_EditingEntries.Count.ToString());
+        EditorGUILayout.LabelField(m_TempEntries.Count.ToString());
 
         EditorGUILayout.EndHorizontal();
 
-        EditorGUI.indentLevel++;
-
-        for (int i = 0; i < m_EditingEntries.Count; i++)
+        foreach (DangerWeightEntry entry in m_TempEntries)
         {
-            DangerWeightEntry entry = m_EditingEntries[i];
-            
             EditorGUILayout.BeginHorizontal();
-
-            EditorGUILayout.BeginVertical();
-            EditorGUILayout.LabelField($"Entry {i}", GUILayout.MaxWidth(60));
-            if (GUILayout.Button("Remove", GUILayout.MaxWidth(60)))
+            if (GUILayout.Button("Remove"))
             {
-                m_EditingEntries.RemoveAt(i);
+                m_TempEntries.Remove(entry);
+
+                m_HaveChangesBeenApplied = false;
                 break;
             }
-            EditorGUILayout.EndVertical();
 
-            EditorGUILayout.BeginVertical();
-            EditorGUILayout.LabelField("Layer");
             entry.Mask = EditorGUILayout.MaskField(entry.Mask, m_Layers);
-            EditorGUILayout.EndVertical();
-
-            EditorGUILayout.BeginVertical();            
-            EditorGUILayout.LabelField("Weight");
             entry.Weight = EditorGUILayout.Slider(entry.Weight, 0, 1);
-            EditorGUILayout.EndVertical();
-
             EditorGUILayout.EndHorizontal();
         }
 
-        EditorGUI.indentLevel--;
-
-        if (serializedObject.ApplyModifiedProperties())
+        GUI.enabled = !m_HaveChangesBeenApplied;
+        if (GUILayout.Button("Apply"))
         {
-            // Update the dangerWeights.DangerLayerWeights with m_EditingEntries
-            foreach (DangerWeightEntry entry in m_EditingEntries)
+            DangerWeights dangerWeights = target as DangerWeights;
+            dangerWeights.DangerLayerWeights ??= new();
+            dangerWeights.DangerLayerWeights.Clear();
+            
+            foreach (DangerWeightEntry entry in m_TempEntries)
             {
                 if (!dangerWeights.DangerLayerWeights.Add(entry))
                 {
-                    Debug.LogWarning($"Duplicate layer weight, {entry}, could not be added!");
+                    Debug.LogWarning($"Duplicate entry, {entry}, cannot be added!");
                 }
             }
 
             dangerWeights.CreateLayerMask();
+
+            m_HaveChangesBeenApplied = true;
         }
-    }
+        GUI.enabled = true;
+
+        serializedObject.ApplyModifiedProperties();
+
+        
+    }  
 }
 
 #endif
