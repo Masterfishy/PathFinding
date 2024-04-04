@@ -35,6 +35,16 @@ public class DangerWeightEntry
     /// <returns>The hash code of the stored layer mask</returns>
     public override int GetHashCode()
     {
-        return Mask.GetHashCode();
+        return Mask.value;
+    }
+
+    /// <summary>
+    /// Compare the stored LayerMasks
+    /// </summary>
+    /// <param name="obj">The other DangerWeightEntry</param>
+    /// <returns>True if the LayerMasks are equal</returns>
+    public override bool Equals(object obj)
+    {
+        return obj is DangerWeightEntry other && other.Mask == Mask;
     }
 }
