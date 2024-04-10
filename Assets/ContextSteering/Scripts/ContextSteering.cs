@@ -11,7 +11,7 @@ public class ContextSteering : MonoBehaviour
     public bool Use2DPhysics = false;
 
     [Header("Danger Settings")]
-    public DangerWeights DangerWeights;
+    public LayerWeightList DangerWeights;
     public float DangerRange;
     public AnimationCurve DangerCurve;
 
@@ -154,7 +154,7 @@ public class ContextSteering : MonoBehaviour
 
             if (Use2DPhysics)
             {
-                RaycastHit2D result2D = Physics2D.Raycast(transform.position, m_DetectionDirections[i], DangerRange, DangerWeights.DangerLayerMask);
+                RaycastHit2D result2D = Physics2D.Raycast(transform.position, m_DetectionDirections[i], DangerRange, DangerWeights.LayerMask);
                 if (result2D)
                 {
                     projection = 1 - (result2D.distance / DangerRange);
@@ -163,7 +163,7 @@ public class ContextSteering : MonoBehaviour
             }
             else
             {
-                bool hit = Physics.Raycast(transform.position, m_DetectionDirections[i], out RaycastHit result, DangerRange, DangerWeights.DangerLayerMask);
+                bool hit = Physics.Raycast(transform.position, m_DetectionDirections[i], out RaycastHit result, DangerRange, DangerWeights.LayerMask);
                 if (hit)
                 {
                     projection = 1 - (result.distance / DangerRange);

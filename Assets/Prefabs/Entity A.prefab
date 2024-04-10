@@ -65,7 +65,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   NumberOfRays: 8
   Use2DPhysics: 1
-  DangerWeights: {fileID: 11400000, guid: 36a49857c1cf5654594bd6c9a323ec29, type: 2}
+  DangerWeights: {fileID: 11400000, guid: 8e813fcf2e8b80c498d8e1b85a32bd83, type: 2}
   DangerRange: 2
   DangerCurve:
     serializedVersion: 2
