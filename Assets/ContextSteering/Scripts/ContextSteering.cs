@@ -143,6 +143,7 @@ public class ContextSteering : MonoBehaviour
     /// </summary>
     private void DangerProjections()
     {
+        Debug.Log($"Danger Projection Layer: {DangerWeights.LayerMask.value}");
 
         for (int i = 0; i < NumberOfRays; ++i)
         {
@@ -170,6 +171,8 @@ public class ContextSteering : MonoBehaviour
                     hitMask = result.transform.gameObject.layer;
                 }
             }
+            
+            Debug.Log($"Yo I just hit layer: {hitMask.value} {LayerMask.LayerToName(hitMask)}");
             
             m_DangerProjections[i] = DangerCurve.Evaluate(projection) * DangerWeights.GetLayerWeight(hitMask);
         }

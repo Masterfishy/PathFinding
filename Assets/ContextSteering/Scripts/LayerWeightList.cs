@@ -21,9 +21,15 @@ public class LayerWeightList : ScriptableObject
     {
         Debug.Log($"Get weight of layer: {layer.value} {LayerMask.LayerToName(layer)}");
 
-        LayerWeightEntry searchEntry = new(layer, 0f);
-        if (m_LayerWeightEntries != null && 
-            m_LayerWeightEntries.TryGetValue(searchEntry, out LayerWeightEntry entry)) 
+        if (m_LayerWeightEntries == null)
+        {
+            Debug.Log("Yeah, m_layerweightentries is not initialized");
+            return 0f;
+        }
+
+        LayerWeightEntry searchEntry = new(layer.value, 0f);
+        Debug.Log($"Search Entry {searchEntry}");
+        if (m_LayerWeightEntries.TryGetValue(searchEntry, out LayerWeightEntry entry)) 
         {
             Debug.Log($"Found entry: {entry}");
             return entry.Weight;
@@ -44,9 +50,10 @@ public class LayerWeightList : ScriptableObject
         foreach (LayerWeightEntry entry in m_LayerWeightEntries)
         {
             Debug.Log($"ORing {entry}");
-            Debug.Log($"Mask index: {entry.Mask.value}");
-            Debug.Log($"Mask: {entry.Mask}");
-            LayerMask |= (int)Mathf.Pow(2, entry.Mask);
+            Debug.Log($"Mask name : {LayerMask.LayerToName(entry.Index)}");
+            Debug.Log($"Mask index: {entry.Index}");
+            Debug.Log($"Mask      : {entry.Mask.value}");
+            LayerMask |= entry.Mask;
         }
 
         Debug.Log($"Created Layer Mask: {LayerMask.value}");
@@ -66,9 +73,17 @@ public class LayerWeightList : ScriptableObject
             if (!m_LayerWeightEntries.Add(entry))
             {
                 Debug.LogWarning($"Duplicate entry, {entry}, will be unused!");
+                continue;
             }
+
+            Debug.Log($"Added {entry}");
         }
 
         CreateLayerMask();
+    }
+
+    private void OnEnable()
+    {
+        GenerateLayerWeight();
     }
 }

@@ -50,7 +50,7 @@ MonoBehaviour:
   PointArrivalDistance: 1
   Speed: 10
   InputReader: {fileID: 11400000, guid: 11a72e5f1a9e58248bcd42a55d11088d, type: 2}
-  DebugPathColor: {r: 1, g: 0, b: 0.8938141, a: 1}
+  DebugPathColor: {r: 0, g: 0.9612422, b: 1, a: 1}
 --- !u!114 &7187017720883486058
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -10,7 +10,7 @@ public class LayerWeightEntryPropertyDrawer : PropertyDrawer
     {
         //-----
         string[] layerNames = GetLayerNames();
-        int layerIndex = LayerMaskToIndex(property.FindPropertyRelative("Mask").intValue, layerNames);
+        int layerIndex = LayerIndexToIndex(property.FindPropertyRelative("Index").intValue, layerNames);
 
         //-----
         float spacer = 10f;
@@ -27,26 +27,26 @@ public class LayerWeightEntryPropertyDrawer : PropertyDrawer
         EditorGUILayout.EndHorizontal();
 
         //-----
-        property.FindPropertyRelative("Mask").intValue = IndexToLayerMask(maskIndex, layerNames);
+        property.FindPropertyRelative("Index").intValue = IndexToLayerIndex(maskIndex, layerNames);
         property.FindPropertyRelative("Weight").floatValue = weight;
     }
 
     /// <summary>
     /// Convert a layer mask to an index
     /// </summary>
-    /// <param name="layerMask">The single layer mask</param>
+    /// <param name="layerIndex">The index of the layer defined by the user presets</param>
     /// <returns>The index value of the layer mask</returns>
-    private static int LayerMaskToIndex(int layerMask, string[] layerNames)
+    private static int LayerIndexToIndex(int layerIndex, string[] layerNames)
     {
-        return LayerNameToIndex(LayerMask.LayerToName(layerMask), layerNames);
+        return LayerNameToIndex(LayerMask.LayerToName(layerIndex), layerNames);
     }
 
     /// <summary>
     /// Convert an index to a layer mask
     /// </summary>
     /// <param name="index">The index of the layer mask</param>
-    /// <returns>The layer mask for the index</returns>
-    private static LayerMask IndexToLayerMask(int index, string[] layerNames)
+    /// <returns>The layer index defined by the user presets</returns>
+    private static LayerMask IndexToLayerIndex(int index, string[] layerNames)
     {
         return LayerMask.NameToLayer(IndexToLayerName(index, layerNames));
     }
