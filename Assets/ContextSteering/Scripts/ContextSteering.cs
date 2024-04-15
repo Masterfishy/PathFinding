@@ -139,7 +139,7 @@ public class ContextSteering : MonoBehaviour
     }
 
     /// <summary>
-    /// Calculate the projection of the m_DiscoveredDanagers on teh m_DectionsDirections
+    /// Calculate the projection of the m_DiscoveredDanagers on the m_DectionsDirections
     /// </summary>
     private void DangerProjections()
     {
@@ -155,7 +155,7 @@ public class ContextSteering : MonoBehaviour
 
             if (Use2DPhysics)
             {
-                RaycastHit2D result2D = Physics2D.Raycast(transform.position, m_DetectionDirections[i], DangerRange, DangerWeights.LayerMask);
+                RaycastHit2D result2D = Physics2D.Raycast(origin: transform.position, direction: m_DetectionDirections[i], distance: DangerRange, layerMask: DangerWeights.LayerMask);
                 if (result2D)
                 {
                     projection = 1 - (result2D.distance / DangerRange);
@@ -164,7 +164,7 @@ public class ContextSteering : MonoBehaviour
             }
             else
             {
-                bool hit = Physics.Raycast(transform.position, m_DetectionDirections[i], out RaycastHit result, DangerRange, DangerWeights.LayerMask);
+                bool hit = Physics.Raycast(origin: transform.position, direction: m_DetectionDirections[i], hitInfo: out RaycastHit result, maxDistance: DangerRange, layerMask: DangerWeights.LayerMask);
                 if (hit)
                 {
                     projection = 1 - (result.distance / DangerRange);

@@ -14,5 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LayerMask:
     serializedVersion: 2
-    m_Bits: 0
-  LayerWeightEntries: []
+    m_Bits: 192
+  LayerWeightEntries:
+  - Index: 6
+    Weight: 1
+  - Index: 7
+    Weight: 1
