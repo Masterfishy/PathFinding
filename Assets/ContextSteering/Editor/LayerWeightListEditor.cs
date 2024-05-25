@@ -1,8 +1,4 @@
-using Codice.Client.Common.Connection.ServerAlias;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEditor;
-using UnityEngine;
 
 [CustomEditor(typeof(LayerWeightList))]
 public class LayerWeightListEditor : Editor

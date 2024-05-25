@@ -1,7 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices.WindowsRuntime;
-using UnityEditor.ShaderKeywordFilter;
 using UnityEngine;
 
 public class AStarPosition : IHeapItem<AStarPosition>

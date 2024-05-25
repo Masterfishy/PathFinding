@@ -1,8 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
-using UnityEditor;
-using System.Security;
 
 [CreateAssetMenu(menuName ="A Star/A* Map")]
 public class AStarMap : ScriptableObject, ISearchableMap

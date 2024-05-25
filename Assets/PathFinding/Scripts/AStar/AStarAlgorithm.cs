@@ -1,10 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEditor.PackageManager.Requests;
 using UnityEngine;
-using UnityEngine.Tilemaps;
 
 /// <summary>
 /// A class that represents a search algorithm implemented with A*

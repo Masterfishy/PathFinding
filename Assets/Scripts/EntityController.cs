@@ -4,10 +4,6 @@ using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using System.Reflection;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 public class EntityController : MonoBehaviour, IPathRequester // IInputListener
 {
     public PathRequestEvent PathRequestEvent;
@@ -200,41 +196,3 @@ public class EntityController : MonoBehaviour, IPathRequester // IInputListener
         }
     }
 }
-
-#if UNITY_EDITOR
-//[CustomEditor(typeof(EntityController))]
-public class EntityControllerEditor : Editor
-{
-    private SerializedProperty serializedProperty;
-
-    private void OnEnable()
-    {
-        serializedProperty = serializedObject.GetIterator();
-        serializedProperty.Next(true);
-    }
-
-    public override void OnInspectorGUI()
-    {
-        serializedObject.Update();
-
-        while (serializedProperty.NextVisible(false))
-        {
-            EditorGUILayout.PropertyField(serializedProperty, true);
-        }
-
-        serializedObject.ApplyModifiedProperties();
-
-        //Transform startPos = StartPosProp.objectReferenceValue as Transform;
-        //Transform endPos = EndPosProp.objectReferenceValue as Transform;
-
-        //EntityController targetEvent = target as EntityController;
-
-        //if (GUILayout.Button("Request Path") && startPos != null && endPos != null)
-        //{
-        //    PathRequest request = new(1, new AStarPosition(Vector3Int.FloorToInt(startPos.position)), new AStarPosition(Vector3Int.FloorToInt(endPos.position)), targetEvent.OnPathFound);
-        //    targetEvent.PathRequestEvent.RaiseEvent(request);
-        //}
-        
-    }
-}
-#endif

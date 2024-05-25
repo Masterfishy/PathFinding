@@ -1,10 +1,5 @@
 using System.Collections;
 using UnityEngine;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 public class ContextSteering : MonoBehaviour
 {
     public int NumberOfRays = 8;
@@ -174,7 +169,7 @@ public class ContextSteering : MonoBehaviour
             
             Debug.Log($"Yo I just hit layer: {hitMask.value} {LayerMask.LayerToName(hitMask)}");
             
-            m_DangerProjections[i] = DangerCurve.Evaluate(projection) * DangerWeights.GetLayerWeight(hitMask);
+            m_DangerProjections[i] = DangerCurve.Evaluate(projection) * ( 1 + DangerWeights.GetLayerWeight(hitMask));
         }
     }
 
@@ -243,57 +238,3 @@ public class ContextSteering : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, DangerRange);
     }
 }
-
-
-#if UNITY_EDITOR
-//[CustomEditor(typeof(ContextSteering))]
-public class ContextSteeringEditor : Editor
-{
-    private SerializedProperty NumberOfRaysProp;
-    private SerializedProperty Use2DPhysicsProp;
-    private SerializedProperty DangerLayerProp;
-    private SerializedProperty DangerRangeProp;
-    private SerializedProperty DangerWeightProp;
-    private SerializedProperty DangerCurveProp;
-    private SerializedProperty DoDebugProp;
-    private SerializedProperty DebugColorProp;
-    private SerializedProperty InterestColorProp;
-    private SerializedProperty DangerColorProp;
-    private SerializedProperty ResultColorProp;
-
-    private void OnEnable()
-    {
-        NumberOfRaysProp = serializedObject.FindProperty("NumberOfRays");
-        Use2DPhysicsProp = serializedObject.FindProperty("Use2DPhysics");
-        DangerLayerProp = serializedObject.FindProperty("DangerLayer");
-        DangerRangeProp = serializedObject.FindProperty("DangerRange");
-        DangerWeightProp = serializedObject.FindProperty("DangerWeight");
-        DangerCurveProp = serializedObject.FindProperty("DangerCurve");
-        DoDebugProp = serializedObject.FindProperty("DoDebug");
-        DebugColorProp = serializedObject.FindProperty("DebugColor");
-        InterestColorProp = serializedObject.FindProperty("InterestColor");
-        DangerColorProp = serializedObject.FindProperty("DangerColor");
-        ResultColorProp = serializedObject.FindProperty("ResultColor");
-    }
-
-    public override void OnInspectorGUI()
-    {
-        serializedObject.Update();
-
-        EditorGUILayout.PropertyField(NumberOfRaysProp);
-        EditorGUILayout.PropertyField(Use2DPhysicsProp);
-        EditorGUILayout.PropertyField(DangerLayerProp);
-        EditorGUILayout.PropertyField(DangerRangeProp);
-        EditorGUILayout.PropertyField(DangerWeightProp);
-        EditorGUILayout.PropertyField(DangerCurveProp);
-        EditorGUILayout.PropertyField(DoDebugProp);
-        EditorGUILayout.PropertyField(DebugColorProp);
-        EditorGUILayout.PropertyField(InterestColorProp);
-        EditorGUILayout.PropertyField(DangerColorProp);
-        EditorGUILayout.PropertyField(ResultColorProp);
-
-        serializedObject.ApplyModifiedProperties();
-    }
-}
-
-#endif
